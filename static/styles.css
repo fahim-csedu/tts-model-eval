@@ -196,10 +196,20 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
   background-color: rgba(15, 118, 110, 0.08);
 }
 
+.word-token:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.35);
+}
+
 .word-token.selected {
   background-color: #ef4444;
   color: white;
   text-decoration: line-through;
+}
+
+.audio-card.active-target {
+  border: 2px solid rgba(15, 118, 110, 0.55);
+  box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.12), var(--shadow);
 }
 
 .panel-header {

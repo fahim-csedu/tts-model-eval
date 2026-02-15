@@ -49,10 +49,7 @@
                 </div>
 
                 <div class="mb-2">
-                    <small class="text-muted">Click words to mark them as incorrect:</small>
-                    <div id="interactive-text" class="interactive-text" style="cursor: pointer;">
-                        <!-- JS will populate this -->
-                    </div>
+                    <small class="text-muted mb-0">Annotate each panel independently: male and female are side by side.</small>
                 </div>
             </div>
         </div>
@@ -62,7 +59,7 @@
 
             <!-- Primary Panel -->
             <div class="{{ 'col-md-6' if peer_sheet_name else 'col-md-12' }}">
-                <div class="card audio-card fade-up">
+                <div class="card audio-card fade-up" id="primaryPanelCard">
                     <div class="card-header">
                         <div class="panel-header">
                             <h5 class="mb-0">{{ 'Male' if 'Male' in sheet_name else 'Female' if 'Female' in sheet_name else
@@ -71,10 +68,15 @@
                         </div>
                     </div>
                     <div class="card-body">
-                        <audio controls class="w-100 mb-2">
+                        <audio controls class="w-100 mb-2" id="primaryAudio">
                             <source src="/audio/{{ sheet_name }}/{{ item_id }}.wav" type="audio/wav">
                             Your browser does not support the audio element.
                         </audio>
+                        <div class="mb-3">
+                            <small class="text-muted d-block mb-1">Transcript (Primary): click incorrect words</small>
+                            <div id="interactive-text-primary" class="interactive-text"></div>
+                            <small class="text-muted" id="selectionMetaPrimary"></small>
+                        </div>
                         <button type="button" class="btn btn-success w-100 mb-3" onclick="fillPerfect('form_primary')">
                             ✨ Perfect (Human-like, Intelligibility: Yes, Context: N/A)
                         </button>
@@ -189,7 +191,7 @@
             {% if peer_sheet_name %}
             <!-- Peer Panel -->
             <div class="col-md-6">
-                <div class="card audio-card fade-up">
+                <div class="card audio-card fade-up" id="peerPanelCard">
                     <div class="card-header">
                         <div class="panel-header">
                             <h5 class="mb-0">{{ 'Male' if 'Male' in peer_sheet_name else 'Female' if 'Female' in
@@ -198,10 +200,15 @@
                         </div>
                     </div>
                     <div class="card-body">
-                        <audio controls class="w-100 mb-2">
+                        <audio controls class="w-100 mb-2" id="peerAudio">
                             <source src="/audio/{{ peer_sheet_name }}/{{ item_id }}.wav" type="audio/wav">
                             Your browser does not support the audio element.
                         </audio>
+                        <div class="mb-3">
+                            <small class="text-muted d-block mb-1">Transcript (Peer): click incorrect words</small>
+                            <div id="interactive-text-peer" class="interactive-text"></div>
+                            <small class="text-muted" id="selectionMetaPeer"></small>
+                        </div>
                         <button type="button" class="btn btn-success w-100 mb-3" onclick="fillPerfect('form_peer')">
                             ✨ Perfect (Human-like, Intelligibility: Yes, Context: N/A)
                         </button>
@@ -357,130 +364,327 @@
 </div>
 
 <script>
-    // ... existing script ...
-    // Data from server
-    const rawText = `{{ text }}`;
-    const existingIncorrectPrimary = `{{ existing_data.get('IncorrectWords', '') }}`;
-    const existingIncorrectPeer = `{{ peer_data.get('IncorrectWords', '') }}`;
-    const existingPreference = `{{ existing_data.get('Preference', '') }}`;
+    const rawText = {{ text | tojson }};
+    const existingIncorrectPrimary = {{ existing_data.get('IncorrectWords', '') | tojson }};
+    const existingIncorrectPeer = {{ peer_data.get('IncorrectWords', '') | tojson }};
+    const existingPreference = {{ existing_data.get('Preference', '') | tojson }};
 
     const hasExistingDataPrimary = {{ 'true' if existing_data else 'false' }};
     const hasExistingDataPeer = {{ 'true' if peer_data else 'false' }};
+    const hasPeer = {{ 'true' if peer_sheet_name else 'false' }};
 
-    // ... (Text display logic kept same) ...
-    const container = document.getElementById('interactive-text');
     const primaryInput = document.getElementById('primary_incorrectWordsInput');
-    const peerInput = document.getElementById('peer_incorrectWordsInput'); // May be null if no peer
+    const peerInput = document.getElementById('peer_incorrectWordsInput');
     const words = rawText.split(/\s+/).filter(w => w.length > 0);
-    let selectedWords = new Set();
 
-    // Pre-select logic for primary form
-    if (existingIncorrectPrimary) {
-        const savedWords = existingIncorrectPrimary.split(/[\s,]+/).filter(w => w.length > 0);
-        savedWords.forEach(w => selectedWords.add(w));
+    let activePanel = 'primary';
+    let isDirty = false;
+    const selectedWordIndexes = { primary: new Set(), peer: new Set() };
+    const panelConfig = {
+        primary: {
+            label: 'Primary',
+            container: document.getElementById('interactive-text-primary'),
+            selectionMeta: document.getElementById('selectionMetaPrimary'),
+            card: document.getElementById('primaryPanelCard'),
+            input: primaryInput
+        },
+        peer: {
+            label: 'Peer',
+            container: document.getElementById('interactive-text-peer'),
+            selectionMeta: document.getElementById('selectionMetaPeer'),
+            card: document.getElementById('peerPanelCard'),
+            input: peerInput
+        }
+    };
+
+    function markDirty() {
+        isDirty = true;
     }
 
-    function renderText() {
-        container.innerHTML = '';
+    function sanitizeToken(token) {
+        return token
+            .replace(/^[\p{P}\p{S}"'“”‘’]+|[\p{P}\p{S}"'“”‘’]+$/gu, '')
+            .trim()
+            .toLowerCase();
+    }
+
+    function parseSavedWords(value) {
+        if (!value) return [];
+        const commaSplit = value.split(',').map(v => v.trim()).filter(Boolean);
+        if (commaSplit.length > 1) return commaSplit;
+        return value.split(/\s+/).map(v => v.trim()).filter(Boolean);
+    }
+
+    function hydrateSelectionFromSaved(panel, savedValue) {
+        const savedWords = parseSavedWords(savedValue);
+        const usedIndexes = new Set();
+
+        savedWords.forEach(savedWord => {
+            const target = sanitizeToken(savedWord);
+            for (let idx = 0; idx < words.length; idx += 1) {
+                if (usedIndexes.has(idx)) continue;
+                if (sanitizeToken(words[idx]) === target) {
+                    selectedWordIndexes[panel].add(idx);
+                    usedIndexes.add(idx);
+                    break;
+                }
+            }
+        });
+    }
+
+    function serializeSelection(panel) {
+        return Array
+            .from(selectedWordIndexes[panel])
+            .sort((a, b) => a - b)
+            .map(idx => words[idx])
+            .join(', ');
+    }
+
+    function updateIncorrectWordsInput(panel) {
+        const value = serializeSelection(panel);
+        const input = panelConfig[panel].input;
+        if (input) input.value = value;
+    }
+
+    function updateSelectionMeta(panel) {
+        const cfg = panelConfig[panel];
+        if (!cfg.selectionMeta) return;
+        const count = selectedWordIndexes[panel].size;
+        cfg.selectionMeta.textContent = `${cfg.label}: ${count} incorrect word(s) selected`;
+    }
+
+    function toggleWord(panel, index) {
+        const activeSet = selectedWordIndexes[panel];
+        if (activeSet.has(index)) {
+            activeSet.delete(index);
+        } else {
+            activeSet.add(index);
+        }
+        updateIncorrectWordsInput(panel);
+        renderText(panel);
+        updateSelectionMeta(panel);
+        markDirty();
+    }
+
+    function renderText(panel) {
+        const cfg = panelConfig[panel];
+        if (!cfg.container) return;
+        const activeSet = selectedWordIndexes[panel];
+        cfg.container.innerHTML = '';
         words.forEach((word, index) => {
             const span = document.createElement('span');
             span.className = 'word-token';
             span.textContent = word;
+            span.setAttribute('role', 'button');
+            span.setAttribute('tabindex', '0');
+            span.setAttribute('aria-pressed', activeSet.has(index) ? 'true' : 'false');
+            span.setAttribute('aria-label', `${panel} ${word} (${index + 1})`);
 
-            if (selectedWords.has(word)) {
+            if (activeSet.has(index)) {
                 span.classList.add('selected');
             }
 
-            span.onclick = () => toggleWord(word, span);
-            container.appendChild(span);
-            container.appendChild(document.createTextNode(' '));
+            span.addEventListener('click', () => {
+                setActivePanel(panel);
+                toggleWord(panel, index);
+            });
+            span.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    setActivePanel(panel);
+                    toggleWord(panel, index);
+                }
+            });
+
+            cfg.container.appendChild(span);
+            cfg.container.appendChild(document.createTextNode(' '));
         });
     }
 
-    function toggleWord(word, element) {
-        if (selectedWords.has(word)) {
-            selectedWords.delete(word);
-            element.classList.remove('selected');
-        } else {
-            selectedWords.add(word);
-            element.classList.add('selected');
-        }
-        updateIncorrectWordsInputs();
+    function setActivePanel(panel) {
+        activePanel = panel;
+        if (panelConfig.primary.card) panelConfig.primary.card.classList.toggle('active-target', panel === 'primary');
+        if (panelConfig.peer.card) panelConfig.peer.card.classList.toggle('active-target', panel === 'peer');
     }
 
-    function updateIncorrectWordsInputs() {
-        const incorrectWordsString = Array.from(selectedWords).join(', ');
-        primaryInput.value = incorrectWordsString;
-        if (peerInput) {
-            peerInput.value = incorrectWordsString;
-        }
-    }
+    const primarySheetName = {{ sheet_name | tojson }};
+    const peerSheetName = {{ (peer_sheet_name or '') | tojson }};
 
-    document.getElementById('primary_clearWordsBtn').onclick = () => {
-        selectedWords.clear();
-        renderText();
-        updateIncorrectWordsInputs();
-    };
-    if (document.getElementById('peer_clearWordsBtn')) {
-        document.getElementById('peer_clearWordsBtn').onclick = () => {
-            selectedWords.clear();
-            renderText();
-            updateIncorrectWordsInputs();
-        };
-    }
-
-    // Initial Render
-    renderText();
-    updateIncorrectWordsInputs(); // Ensure inputs reflect initial selection
-
-
-    // Default Logic for Context
-    function applyDefaultContext(formId, hasExisting) {
-        if (!hasExisting) {
-            const form = document.getElementById(formId);
-            if (rawText.includes('?')) {
-                form.querySelector(`input[name="Context"][value="No"]`).checked = true;
-            } else {
-                form.querySelector(`input[name="Context"][value="Not Applicable"]`).checked = true;
+    function setRadioValue(formId, fieldName, value, shouldMarkDirty = false) {
+        const field = document.querySelector(`#${formId} input[name="${fieldName}"][value="${value}"]`);
+        if (field) {
+            field.checked = true;
+            if (shouldMarkDirty) {
+                markDirty();
             }
         }
     }
+
+    function togglePlayPauseForPanel(panel) {
+        const audioId = panel === 'primary' ? 'primaryAudio' : 'peerAudio';
+        const audio = document.getElementById(audioId);
+        if (!audio) return;
+        if (audio.paused) {
+            audio.play();
+        } else {
+            audio.pause();
+        }
+    }
+
+    function setPreference(value, shouldMarkDirty = true) {
+        const target = document.querySelector(`input[name="preference"][value="${value}"]`);
+        if (target) {
+            target.checked = true;
+            if (shouldMarkDirty) {
+                markDirty();
+            }
+        }
+    }
+
+    function validateForm(annotationData, sheetName) {
+        if (!annotationData.Naturalness) {
+            alert(`Please select a Naturalness rating for ${sheetName}.`);
+            return false;
+        }
+        if (!annotationData.Intelligibility) {
+            alert(`Please select an Intelligibility rating for ${sheetName}.`);
+            return false;
+        }
+        if (!annotationData.Context) {
+            alert(`Please select a Context rating for ${sheetName}.`);
+            return false;
+        }
+        return true;
+    }
+
+    hydrateSelectionFromSaved('primary', existingIncorrectPrimary);
+    if (hasPeer) hydrateSelectionFromSaved('peer', existingIncorrectPeer);
+    updateIncorrectWordsInput('primary');
+    updateSelectionMeta('primary');
+    renderText('primary');
+    if (hasPeer) {
+        updateIncorrectWordsInput('peer');
+        updateSelectionMeta('peer');
+        renderText('peer');
+    }
+
+    document.getElementById('primary_clearWordsBtn').addEventListener('click', () => {
+        selectedWordIndexes.primary.clear();
+        updateIncorrectWordsInput('primary');
+        renderText('primary');
+        updateSelectionMeta('primary');
+        setActivePanel('primary');
+        markDirty();
+    });
+
+    const peerClearBtn = document.getElementById('peer_clearWordsBtn');
+    if (peerClearBtn) {
+        peerClearBtn.addEventListener('click', () => {
+            selectedWordIndexes.peer.clear();
+            updateIncorrectWordsInput('peer');
+            renderText('peer');
+            updateSelectionMeta('peer');
+            setActivePanel('peer');
+            markDirty();
+        });
+    }
+
+    panelConfig.primary.card.addEventListener('click', () => setActivePanel('primary'));
+    if (hasPeer && panelConfig.peer.card) panelConfig.peer.card.addEventListener('click', () => setActivePanel('peer'));
+
+    function applyDefaultContext(formId, hasExisting) {
+        if (!hasExisting) {
+            if (rawText.includes('?')) {
+                setRadioValue(formId, 'Context', 'No');
+            } else {
+                setRadioValue(formId, 'Context', 'Not Applicable');
+            }
+        }
+    }
+
     applyDefaultContext('form_primary', hasExistingDataPrimary);
     if (document.getElementById('form_peer')) {
         applyDefaultContext('form_peer', hasExistingDataPeer);
     }
 
-    // Set initial preference if exists (handle JS side just in case HTML 'checked' missed something dynamic)
     if (existingPreference) {
-        const rad = document.querySelector(`input[name="preference"][value="${existingPreference}"]`);
-        if (rad) rad.checked = true;
+        setPreference(existingPreference, false);
     }
 
-
-    // Perfect Button Logic
     function fillPerfect(formId) {
         const form = document.getElementById(formId);
+        const panel = formId === 'form_primary' ? 'primary' : 'peer';
         form.querySelector(`input[name="Naturalness"][value="Human-like"]`).checked = true;
         form.querySelector(`input[name="Intelligibility"][value="Yes"]`).checked = true;
         form.querySelector(`input[name="Context"][value="Not Applicable"]`).checked = true;
 
-        // Clear other fields
-        selectedWords.clear();
-        renderText();
-        updateIncorrectWordsInputs();
+        selectedWordIndexes[panel].clear();
+        updateIncorrectWordsInput(panel);
+        renderText(panel);
+        updateSelectionMeta(panel);
+        setActivePanel(panel);
 
         form.querySelector(`input[name="NumberMistakes"]`).value = '';
         form.querySelector(`input[name="ConjunctMistakes"]`).value = '';
         form.querySelector(`textarea[name="Notes"]`).value = '';
+        markDirty();
     }
 
-    // Auto-scroll sidebar to active item
+    const formsToWatch = ['form_primary', 'form_peer'];
+    formsToWatch.forEach((formId) => {
+        const form = document.getElementById(formId);
+        if (!form) return;
+        form.addEventListener('input', markDirty);
+        form.addEventListener('change', markDirty);
+    });
+
+    const prefInputs = document.querySelectorAll('input[name="preference"]');
+    prefInputs.forEach((input) => input.addEventListener('change', markDirty));
+
+    window.addEventListener('beforeunload', (event) => {
+        if (!isDirty) return;
+        event.preventDefault();
+        event.returnValue = '';
+    });
+
     window.onload = function () {
         const activeItem = document.querySelector('.list-group-item.active');
         if (activeItem) {
             activeItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
     };
+
+    setActivePanel('primary');
+
+    document.addEventListener('keydown', (event) => {
+        const target = event.target;
+        const tag = target && target.tagName ? target.tagName.toLowerCase() : '';
+        const isTyping = tag === 'input' || tag === 'textarea' || tag === 'select' || (target && target.isContentEditable);
+        if (isTyping) return;
+
+        if (event.code === 'Space') {
+            event.preventDefault();
+            togglePlayPauseForPanel(activePanel);
+            return;
+        }
+
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            document.getElementById('saveAllBtn').click();
+            return;
+        }
+
+        if (event.key === '1') setRadioValue(`form_${activePanel}`, 'Naturalness', 'Human-like', true);
+        if (event.key === '2') setRadioValue(`form_${activePanel}`, 'Naturalness', 'Slightly Robotic', true);
+        if (event.key === '3') setRadioValue(`form_${activePanel}`, 'Naturalness', 'Very Robotic', true);
+
+        if (hasPeer && event.key === '[') setActivePanel('primary');
+        if (hasPeer && event.key === ']') setActivePanel('peer');
+
+        if (hasPeer && event.key.toLowerCase() === 'y') setPreference(primarySheetName);
+        if (hasPeer && event.key.toLowerCase() === 'n') setPreference(peerSheetName);
+        if (hasPeer && event.key.toLowerCase() === 'e') setPreference('Equal');
+    });
 
     document.getElementById('saveAllBtn').addEventListener('click', function (e) {
         e.preventDefault();
@@ -491,38 +695,30 @@
         }
 
         const allAnnotations = [];
-        let isValid = true;
 
-        // Preference Validation
         let preference = null;
         if (document.getElementById('form_peer')) {
             const prefEl = document.querySelector('input[name="preference"]:checked');
             if (prefEl) {
                 preference = prefEl.value;
             } else {
-                // Optional: Enforce preference selection? User just said "add button... and store it". 
-                // It's better to enforce it if they are doing comparison.
-                // Let's enforce it.
                 alert("Please select which version is better (or if they are equal).");
                 return;
             }
         }
 
-        formsToSubmit.forEach(formId => {
+        for (const formId of formsToSubmit) {
             const form = document.getElementById(formId);
             const formData = new FormData(form);
             const annotationData = Object.fromEntries(formData.entries());
             const sheetName = form.dataset.sheet;
 
-            // Basic validation for required fields (Naturalness)
-            if (!annotationData.Naturalness) {
-                alert(`Please select a Naturalness rating for ${sheetName}.`);
-                isValid = false;
+            if (!validateForm(annotationData, sheetName)) {
+                return;
             }
 
-            // Add Preference to data
             if (preference) {
-                annotationData['Preference'] = preference;
+                annotationData.Preference = preference;
             }
 
             allAnnotations.push({
@@ -530,19 +726,14 @@
                 item_id: '{{ item_id }}',
                 annotation: annotationData
             });
-        });
-
-        if (!isValid) {
-            return;
         }
 
-        // Disable button to prevent double submit
         const btn = this;
         const originalText = btn.innerText;
         btn.disabled = true;
         btn.innerText = "Saving...";
 
-        fetch('/api/save_multiple', { // Assuming a new endpoint for multiple saves
+        fetch('/api/save_multiple', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -552,9 +743,9 @@
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
+                    isDirty = false;
                     btn.innerText = "Saved!";
 
-                    // Mark current item as done in sidebar without reload
                     const activeSidebarItem = document.querySelector('.list-group-item.active');
                     if (activeSidebarItem && !activeSidebarItem.querySelector('.text-success')) {
                         const badge = document.createElement('span');
@@ -564,7 +755,6 @@
                     }
 
                     setTimeout(() => {
-                        // Auto-advance
                         const nextBtn = document.getElementById('nextItemBtn');
                         if (nextBtn) {
                             window.location.href = nextBtn.href;
@@ -572,16 +762,14 @@
                             btn.disabled = false;
                             btn.innerText = "Saved (Last Item)";
                         }
-                    }, 300); // Faster transition
-
+                    }, 300);
                 } else {
                     alert('Error saving: ' + (data.message || 'Unknown error'));
                     btn.disabled = false;
                     btn.innerText = originalText;
                 }
             })
-            .catch(error => {
-                console.error('Error:', error);
+            .catch(() => {
                 alert('Network error or server issue.');
                 btn.disabled = false;
                 btn.innerText = originalText;

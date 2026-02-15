@@ -32,6 +32,28 @@ def get_excel_data():
         print(f"Error reading Excel: {e}")
         return None
 
+def resolve_peer_sheet(sheet_name, all_sheet_names):
+    explicit_map = {
+        'Atika - Male': 'Atika - Female',
+        'Atika - Female': 'Atika - Male',
+        'Male': 'Female',
+        'Female': 'Male',
+    }
+    if sheet_name in explicit_map and explicit_map[sheet_name] in all_sheet_names:
+        return explicit_map[sheet_name]
+
+    if 'male' in sheet_name.lower():
+        candidate = sheet_name.lower().replace('male', 'female')
+        for name in all_sheet_names:
+            if name.lower() == candidate:
+                return name
+    if 'female' in sheet_name.lower():
+        candidate = sheet_name.lower().replace('female', 'male')
+        for name in all_sheet_names:
+            if name.lower() == candidate:
+                return name
+    return None
+
 @app.route('/')
 def index():
     xls = get_excel_data()
@@ -124,11 +146,7 @@ def annotate(sheet_name, item_id):
         prev_id = None
 
     # Peer Sheet Logic (for Male/Female comparison)
-    PEER_MAP = {
-        'Atika - Male': 'Atika - Female',
-        'Atika - Female': 'Atika - Male'
-    }
-    peer_sheet_name = PEER_MAP.get(sheet_name)
+    peer_sheet_name = resolve_peer_sheet(sheet_name, xls.sheet_names)
     peer_data = {}
     
     if peer_sheet_name:
@@ -207,4 +225,4 @@ def help_page():
 if __name__ == '__main__':
     # Ensure directories exist
     os.makedirs(ANNOTATION_DIR, exist_ok=True)
-    app.run(debug=True, port=5002)
+    app.run(debug=True, port=3002)
