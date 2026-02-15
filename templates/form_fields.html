@@ -1,0 +1,137 @@
+<div class="mb-3">
+    <label class="form-label d-block small fw-bold">Naturalness</label>
+    <div class="form-check form-check-inline small">
+        <input class="form-check-input" type="radio" name="Naturalness" id="{{ prefix }}_nat_human" value="Human-like"
+            {% if form_data.get('Naturalness')=='Human-like' %}checked{% endif %} required>
+        <label class="form-check-label" for="{{ prefix }}_nat_human">Human-like</label>
+    </div>
+    <div class="form-check form-check-inline small">
+        <input class="form-check-input" type="radio" name="Naturalness" id="{{ prefix }}_nat_slightly"
+            value="Slightly Robotic" {% if form_data.get('Naturalness')=='Slightly Robotic' %}checked{% endif %}>
+        <label class="form-check-label" for="{{ prefix }}_nat_slightly">Slightly Robotic</label>
+    </div>
+    <div class="form-check form-check-inline small">
+        <input class="form-check-input" type="radio" name="Naturalness" id="{{ prefix }}_nat_robotic"
+            value="Very Robotic" {% if form_data.get('Naturalness')=='Very Robotic' %}checked{% endif %}>
+        <label class="form-check-label" for="{{ prefix }}_nat_robotic">Very Robotic</label>
+    </div>
+</div>
+
+<div class="mb-3">
+    <label class="form-label d-block small fw-bold">Intelligibility</label>
+    <div class="form-check form-check-inline small">
+        <input class="form-check-input" type="radio" name="Intelligibility" id="{{ prefix }}_int_yes" value="Yes" {% if
+            form_data.get('Intelligibility')=='Yes' %}checked{% endif %}>
+        <label class="form-check-label" for="{{ prefix }}_int_yes">Yes</label>
+    </div>
+    <div class="form-check form-check-inline small">
+        <input class="form-check-input" type="radio" name="Intelligibility" id="{{ prefix }}_int_mostly" value="Mostly"
+            {% if form_data.get('Intelligibility')=='Mostly' %}checked{% endif %}>
+        <label class="form-check-label" for="{{ prefix }}_int_mostly">Mostly</label>
+    </div>
+    <div class="form-check form-check-inline small">
+        <input class="form-check-input" type="radio" name="Intelligibility" id="{{ prefix }}_int_barely" value="Barely"
+            {% if form_data.get('Intelligibility')=='Barely' %}checked{% endif %}>
+        <label class="form-check-label" for="{{ prefix }}_int_barely">Barely</label>
+    </div>
+    <div class="form-check form-check-inline small">
+        <input class="form-check-input" type="radio" name="Intelligibility" id="{{ prefix }}_int_no" value="No" {% if
+            form_data.get('Intelligibility')=='No' %}checked{% endif %}>
+        <label class="form-check-label" for="{{ prefix }}_int_no">No</label>
+    </div>
+</div>
+
+<div class="mb-3">
+    <label class="form-label d-block small fw-bold">Context</label>
+    <div class="form-check form-check-inline small">
+        <input class="form-check-input" type="radio" name="Context" id="{{ prefix }}_ctx_yes" value="Yes" {% if
+            form_data.get('Context')=='Yes' %}checked{% endif %}>
+        <label class="form-check-label" for="{{ prefix }}_ctx_yes">Yes</label>
+    </div>
+    <div class="form-check form-check-inline small">
+        <input class="form-check-input" type="radio" name="Context" id="{{ prefix }}_ctx_no" value="No" {% if
+            form_data.get('Context')=='No' %}checked{% endif %}>
+        <label class="form-check-label" for="{{ prefix }}_ctx_no">No</label>
+    </div>
+    <div class="form-check form-check-inline small">
+        <input class="form-check-input" type="radio" name="Context" id="{{ prefix }}_ctx_na" value="Not Applicable" {%
+            if form_data.get('Context')=='Not Applicable' %}checked{% endif %}>
+        <label class="form-check-label" for="{{ prefix }}_ctx_na">N/A</label>
+    </div>
+</div>
+
+<div class="mb-3">
+    <label class="form-label small fw-bold">Incorrect Selection (from text above)</label>
+    <!-- This field needs to be synced with the text selection above. 
+                     If we have two forms, we might need two 'incorrect' fields if they can differ.
+                     Usually incorrect word depends on audio. So yes, separate.
+                     BUT the text interaction is global.
+                     Let's make text interactions toggle a specific form's input?
+                     Or simpler: Add 'Select for Left' 'Select for Right' mode?
+                     COMPLEXITY REDUCTION:
+                     Let's assume the interactive text adds to BOTH if both are active? Or valid for both?
+                     Wait, if one model says a word wrong, the other might not.
+                     SO we need separate inputs.
+                     
+                     Solution: 
+                     The interactive text area is singular.
+                     When you click a word, it should probably ask "For Male? For Female? Both?".
+                     OR, easier: We have two text areas here. Manual entry allowed.
+                     AND we have the "Interactive Text" clicker. 
+                     Current clicker updates `incorrectWordsInput`. 
+                     Let's give each form an `incorrectWordsInput`.
+                     When user clicks a word in header, which one does it go to?
+                     Let's default to populating BOTH or 'Primary' and user can edit?
+                     Better: Clicking a word toggles it in a "Staging Area".
+                     Then we have "Add to Left", "Add to Right" buttons?
+                     
+                     Simplest implementation for now:
+                     Each form has a readonly textarea.
+                     The Interactive Text tool updates the "Active" form's textarea.
+                     How to select active form?
+                     Maybe clicking on the form card makes it active.
+                     
+                     Let's stick to: Interactive Text updates BOTH for now, and user deletes from one if not needed?
+                     Or just make it manual text for now in side-by-side to avoid complexity?
+                     
+                     Let's revert: The Interactive Text updates a hidden buffer.
+                     Let's give each form its own "Incorrect Words" input.
+                     And we remove the "Interactive Text" logic from `annotate.html` global scope and move it to a per-form logic?
+                     No, text is shared.
+                     
+                     DECISION: Interactive Text updates the PRIMARY form (Left) by default.
+                     For the Peer form (Right), we make it a simple text input or copy from Primary?
+                     
+                     Actually, let's keep it simple.
+                     We will have `IncorrectWords` input in this included template.
+                     We will give it a unique ID based on prefix. `id="{{ prefix }}_IncorrectWords"`
+                     
+                     JS will need to be smart.
+                -->
+    <textarea class="form-control form-control-sm" name="IncorrectWords" id="{{ prefix }}_IncorrectWords" rows="2"
+        placeholder="Click words in text or type here...">{{ form_data.get('IncorrectWords', '') }}</textarea>
+    <div class="d-flex justify-content-end mt-1">
+        <button type="button" class="btn btn-xs btn-outline-dark" onclick="clearWords('{{ prefix }}')">X</button>
+        <!-- Button to copy from selection -->
+        <button type="button" class="btn btn-xs btn-outline-primary ms-1"
+            onclick="copySelectionTo('{{ prefix }}')">&darr; Add Selected</button>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-6 mb-3">
+        <label class="form-label small fw-bold">Num Mistakes</label>
+        <input type="text" class="form-control form-control-sm" name="NumberMistakes"
+            value="{{ form_data.get('NumberMistakes', '') }}">
+    </div>
+    <div class="col-6 mb-3">
+        <label class="form-label small fw-bold">Conjunct Mistakes</label>
+        <input type="text" class="form-control form-control-sm" name="ConjunctMistakes"
+            value="{{ form_data.get('ConjunctMistakes', '') }}">
+    </div>
+</div>
+
+<div class="mb-3">
+    <label class="form-label small fw-bold">Notes</label>
+    <textarea class="form-control form-control-sm" name="Notes" rows="1">{{ form_data.get('Notes', '') }}</textarea>
+</div>

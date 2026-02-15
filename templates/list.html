@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-end mb-4 fade-up">
+    <div>
+        <h1 class="section-title mb-1">{{ 'Male' if 'Male' in sheet_name else 'Female' if 'Female' in sheet_name else sheet_name }}</h1>
+        <p class="text-muted mb-0">Jump into any item and keep moving.</p>
+    </div>
+    <a href="/" class="btn btn-outline-secondary">Back to Sheets</a>
+</div>
+
+<div class="list-group fade-up">
+    {% for item in items %}
+    <a href="/annotate/{{ sheet_name }}/{{ item.id }}"
+        class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+        <div>
+            <strong>ID: {{ item.id }}</strong> - {{ item.text[:50] }}...
+        </div>
+        {% if item.status == 'Annotated' %}
+        <span class="badge bg-success rounded-pill">Annotated</span>
+        {% else %}
+        <span class="badge bg-warning text-dark rounded-pill">Pending</span>
+        {% endif %}
+    </a>
+    {% endfor %}
+</div>
+{% endblock %}

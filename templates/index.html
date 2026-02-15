@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-end mb-4 fade-up">
+    <div>
+        <h1 class="section-title mb-1">Select Sheet to Evaluate</h1>
+        <p class="text-muted mb-0">Pick a batch and start annotating.</p>
+    </div>
+    <a href="/help" target="_blank" class="btn btn-outline-secondary">Quick Guide</a>
+</div>
+
+<div class="sheet-grid">
+    {% for sheet in sheets %}
+    <a href="/sheet/{{ sheet }}" class="sheet-card text-decoration-none text-dark fade-up">
+        <h5 class="mb-2">{{ 'Male' if 'Male' in sheet else 'Female' if 'Female' in sheet else sheet }}</h5>
+        <p class="text-muted mb-0">Open the list of items and begin scoring.</p>
+    </a>
+    {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card help-card fade-up">
+            <div class="card-header">
+                <h2 class="mb-0">How to Use the Annotation Tool</h2>
+            </div>
+            <div class="card-body">
+
+                <section class="mb-5">
+                    <h4>1. Overview</h4>
+                    <p>
+                        This tool allows you to listen to two versions of a Text-to-Speech (TTS) audio (Male and Female)
+                        and evaluate them based on Naturalness, Intelligibility, and Context.
+                        You will also identify specific mistakes in the text.
+                    </p>
+                </section>
+
+                <section class="mb-5">
+                    <h4>2. Marking Incorrect Words</h4>
+                    <div class="alert alert-info">
+                        <strong>Feature:</strong> Interactive Text Highlighting
+                    </div>
+                    <p>
+                        The text displayed at the top is <strong>interactive</strong>.
+                        If you hear a mispronunciation or an error in a specific word:
+                    </p>
+                    <ul>
+                        <li><span class="badge bg-secondary">Click</span> on the word in the text box.</li>
+                        <li>It will turn <span class="badge bg-danger text-decoration-line-through">Red and
+                                Strikethrough</span>.</li>
+                        <li>This word is automatically added to the <strong>"List of IncorrectWords"</strong> box for
+                            both forms.</li>
+                        <li>Click the word again to undo the selection.</li>
+                    </ul>
+                </section>
+
+                <section class="mb-5">
+                    <h4>3. The "Perfect" Button ✨</h4>
+                    <p>
+                        If an audio clip is distinctively good and has no errors, you can use the <strong>✨
+                            Perfect</strong> button located above the form.
+                    </p>
+                    <p><strong>Clicking this will automatically:</strong></p>
+                    <ul>
+                        <li>Set <strong>Naturalness</strong> to "Human-like".</li>
+                        <li>Set <strong>Intelligibility</strong> to "Yes".</li>
+                        <li>Set <strong>Context</strong> to "Not Applicable".</li>
+                        <li><strong>Clear</strong> any selected incorrect words or notes.</li>
+                    </ul>
+                    <p class="text-muted small">Use this to speed up annotation for good samples!</p>
+                </section>
+
+                <section class="mb-5">
+                    <h4>4. Evaluation Fields</h4>
+                    <ul>
+                        <li><strong>Naturalness:</strong> Does the voice sound robotic or like a real human?</li>
+                        <li><strong>Intelligibility:</strong> Is the audio clear? Can you understand every word?</li>
+                        <li><strong>Context:</strong> Does the tone match the sentence (e.g., rising tone for
+                            questions)?
+                            <em>Select "Not Applicable" for simple statements without specific tonal requirements.</em>
+                        </li>
+                        <li><strong>Number Mistakes (সংখ্যা):</strong> List any numbers that were read incorrectly.</li>
+                        <li><strong>Conjunct Mistakes (যুক্তাক্ষর):</strong> List any issues with complex characters.
+                        </li>
+                    </ul>
+                </section>
+
+                <section class="mb-5">
+                    <h4>5. Saving & Navigation</h4>
+                    <ul>
+                        <li><strong>Overall Preference:</strong> You MUST select which version (Male or Female) sounded
+                            better, or if they were Equal.</li>
+                        <li><strong>Save All & Next:</strong> Click this button at the bottom to save evaluations for
+                            BOTH files and automatically move to the next pending item.</li>
+                    </ul>
+                </section>
+
+                <div class="text-center mt-4">
+                    <a href="/" class="btn btn-primary btn-lg">Got it! Go to Dashboard</a>
+                    <button onclick="window.close()" class="btn btn-outline-secondary btn-lg ms-2">Close Help</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

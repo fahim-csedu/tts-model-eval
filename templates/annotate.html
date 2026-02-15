@@ -1,0 +1,591 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row g-4">
+    <!-- Sidebar -->
+    <div class="col-lg-3 col-md-4">
+        <div class="sidebar fade-up">
+            <div class="sidebar-header">
+                <a href="/sheet/{{ sheet_name }}" class="btn btn-outline-secondary btn-sm">&larr; Back</a>
+                <span class="sidebar-title">Items</span>
+            </div>
+            <div class="list-group list-group-flush">
+            {% for item in items %}
+            <a href="/annotate/{{ sheet_name }}/{{ item.id }}"
+                class="list-group-item list-group-item-action {{ 'active' if item.id == item_id else '' }}">
+                <div class="d-flex w-100 justify-content-between">
+                    <span class="text-truncate" style="max-width: 85%;">{{ item.id }}</span>
+                    {% if item.status == 'Annotated' %}
+                    <span class="text-success">&check;</span>
+                    {% endif %}
+                </div>
+            </a>
+            {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="col-lg-9 col-md-8">
+        <div class="card mb-4 annotate-toolbar fade-up">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h5 class="card-title">
+                        ID: {{ item_id }}
+                        <a href="/help" target="_blank" class="text-decoration-none ms-2" title="How to use?">
+                            <small>❓</small>
+                        </a>
+                    </h5>
+                    <div>
+                        {% if prev_id %}
+                        <a href="/annotate/{{ sheet_name }}/{{ prev_id }}"
+                            class="btn btn-outline-secondary btn-sm">&larr; Prev</a>
+                        {% endif %}
+                        {% if next_id %}
+                        <a href="/annotate/{{ sheet_name }}/{{ next_id }}" class="btn btn-outline-secondary btn-sm"
+                            id="nextItemBtn">Next &rarr;</a>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="mb-2">
+                    <small class="text-muted">Click words to mark them as incorrect:</small>
+                    <div id="interactive-text" class="interactive-text" style="cursor: pointer;">
+                        <!-- JS will populate this -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Comparison Container -->
+        <div class="row">
+
+            <!-- Primary Panel -->
+            <div class="{{ 'col-md-6' if peer_sheet_name else 'col-md-12' }}">
+                <div class="card audio-card fade-up">
+                    <div class="card-header">
+                        <div class="panel-header">
+                            <h5 class="mb-0">{{ 'Male' if 'Male' in sheet_name else 'Female' if 'Female' in sheet_name else
+                                sheet_name }} (Current)</h5>
+                            <span class="panel-chip">Primary</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <audio controls class="w-100 mb-2">
+                            <source src="/audio/{{ sheet_name }}/{{ item_id }}.wav" type="audio/wav">
+                            Your browser does not support the audio element.
+                        </audio>
+                        <button type="button" class="btn btn-success w-100 mb-3" onclick="fillPerfect('form_primary')">
+                            ✨ Perfect (Human-like, Intelligibility: Yes, Context: N/A)
+                        </button>
+
+                        <!-- Form Primary -->
+                        <form id="form_primary" data-sheet="{{ sheet_name }}">
+                            <div class="mb-3">
+                                <label class="form-label d-block">Naturalness: Does it sound robotic or human?</label>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="Naturalness"
+                                        id="primary_nat_human" value="Human-like" {% if
+                                        existing_data.get('Naturalness')=='Human-like' %}checked{% endif %} required>
+                                    <label class="form-check-label" for="primary_nat_human">Human-like</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="Naturalness"
+                                        id="primary_nat_slightly" value="Slightly Robotic" {% if
+                                        existing_data.get('Naturalness')=='Slightly Robotic' %}checked{% endif %}>
+                                    <label class="form-check-label" for="primary_nat_slightly">Slightly Robotic</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="Naturalness"
+                                        id="primary_nat_robotic" value="Very Robotic" {% if
+                                        existing_data.get('Naturalness')=='Very Robotic' %}checked{% endif %}>
+                                    <label class="form-check-label" for="primary_nat_robotic">Very Robotic</label>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label d-block">Intelligibility: Can you understand every word
+                                        clearly?</label>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="Intelligibility"
+                                            id="primary_int_yes" value="Yes" {% if
+                                            existing_data.get('Intelligibility')=='Yes' %}checked{% endif %}>
+                                        <label class="form-check-label" for="primary_int_yes">Yes</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="Intelligibility"
+                                            id="primary_int_mostly" value="Mostly" {% if
+                                            existing_data.get('Intelligibility')=='Mostly' %}checked{% endif %}>
+                                        <label class="form-check-label" for="primary_int_mostly">Mostly</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="Intelligibility"
+                                            id="primary_int_barely" value="Barely" {% if
+                                            existing_data.get('Intelligibility')=='Barely' %}checked{% endif %}>
+                                        <label class="form-check-label" for="primary_int_barely">Barely</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="Intelligibility"
+                                            id="primary_int_no" value="No" {% if
+                                            existing_data.get('Intelligibility')=='No' %}checked{% endif %}>
+                                        <label class="form-check-label" for="primary_int_no">No</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label d-block">Context: Did it get the question/sarcasm tone
+                                        right?</label>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="Context" id="primary_ctx_yes"
+                                            value="Yes" {% if existing_data.get('Context')=='Yes' %}checked{% endif %}>
+                                        <label class="form-check-label" for="primary_ctx_yes">Yes</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="Context" id="primary_ctx_no"
+                                            value="No" {% if existing_data.get('Context')=='No' %}checked{% endif %}>
+                                        <label class="form-check-label" for="primary_ctx_no">No</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="Context" id="primary_ctx_na"
+                                            value="Not Applicable" {% if existing_data.get('Context')=='Not Applicable'
+                                            %}checked{% endif %}>
+                                        <label class="form-check-label" for="primary_ctx_na">Not Applicable</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">List of IncorrectWords</label>
+                                <textarea class="form-control" name="IncorrectWords" id="primary_incorrectWordsInput"
+                                    rows="2" readonly>{{ existing_data.get('IncorrectWords', '') }}</textarea>
+                                <button type="button" class="btn btn-sm btn-outline-secondary mt-1"
+                                    id="primary_clearWordsBtn">Clear
+                                    Selection</button>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">List of Mistakes regarding Numbers (সংখ্যা)</label>
+                                    <input type="text" class="form-control" name="NumberMistakes"
+                                        value="{{ existing_data.get('NumberMistakes', '') }}">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">List of Conjunct Mistakes (যুক্তাক্ষর)</label>
+                                    <input type="text" class="form-control" name="ConjunctMistakes"
+                                        value="{{ existing_data.get('ConjunctMistakes', '') }}">
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Notes</label>
+                                <textarea class="form-control" name="Notes"
+                                    rows="2">{{ existing_data.get('Notes', '') }}</textarea>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            {% if peer_sheet_name %}
+            <!-- Peer Panel -->
+            <div class="col-md-6">
+                <div class="card audio-card fade-up">
+                    <div class="card-header">
+                        <div class="panel-header">
+                            <h5 class="mb-0">{{ 'Male' if 'Male' in peer_sheet_name else 'Female' if 'Female' in
+                                peer_sheet_name else peer_sheet_name }}</h5>
+                            <span class="panel-chip">Peer</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <audio controls class="w-100 mb-2">
+                            <source src="/audio/{{ peer_sheet_name }}/{{ item_id }}.wav" type="audio/wav">
+                            Your browser does not support the audio element.
+                        </audio>
+                        <button type="button" class="btn btn-success w-100 mb-3" onclick="fillPerfect('form_peer')">
+                            ✨ Perfect (Human-like, Intelligibility: Yes, Context: N/A)
+                        </button>
+
+                        <!-- Form Peer -->
+                        <form id="form_peer" data-sheet="{{ peer_sheet_name }}">
+                            <div class="mb-3">
+                                <label class="form-label d-block">Naturalness: Does it sound robotic or human?</label>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="Naturalness" id="peer_nat_human"
+                                        value="Human-like" {% if peer_data.get('Naturalness')=='Human-like' %}checked{%
+                                        endif %} required>
+                                    <label class="form-check-label" for="peer_nat_human">Human-like</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="Naturalness"
+                                        id="peer_nat_slightly" value="Slightly Robotic" {% if
+                                        peer_data.get('Naturalness')=='Slightly Robotic' %}checked{% endif %}>
+                                    <label class="form-check-label" for="peer_nat_slightly">Slightly Robotic</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="Naturalness"
+                                        id="peer_nat_robotic" value="Very Robotic" {% if
+                                        peer_data.get('Naturalness')=='Very Robotic' %}checked{% endif %}>
+                                    <label class="form-check-label" for="peer_nat_robotic">Very Robotic</label>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label d-block">Intelligibility: Can you understand every word
+                                        clearly?</label>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="Intelligibility"
+                                            id="peer_int_yes" value="Yes" {% if peer_data.get('Intelligibility')=='Yes'
+                                            %}checked{% endif %}>
+                                        <label class="form-check-label" for="peer_int_yes">Yes</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="Intelligibility"
+                                            id="peer_int_mostly" value="Mostly" {% if
+                                            peer_data.get('Intelligibility')=='Mostly' %}checked{% endif %}>
+                                        <label class="form-check-label" for="peer_int_mostly">Mostly</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="Intelligibility"
+                                            id="peer_int_barely" value="Barely" {% if
+                                            peer_data.get('Intelligibility')=='Barely' %}checked{% endif %}>
+                                        <label class="form-check-label" for="peer_int_barely">Barely</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="Intelligibility"
+                                            id="peer_int_no" value="No" {% if peer_data.get('Intelligibility')=='No'
+                                            %}checked{% endif %}>
+                                        <label class="form-check-label" for="peer_int_no">No</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label d-block">Context: Did it get the question/sarcasm tone
+                                        right?</label>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="Context" id="peer_ctx_yes"
+                                            value="Yes" {% if peer_data.get('Context')=='Yes' %}checked{% endif %}>
+                                        <label class="form-check-label" for="peer_ctx_yes">Yes</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="Context" id="peer_ctx_no"
+                                            value="No" {% if peer_data.get('Context')=='No' %}checked{% endif %}>
+                                        <label class="form-check-label" for="peer_ctx_no">No</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="Context" id="peer_ctx_na"
+                                            value="Not Applicable" {% if peer_data.get('Context')=='Not Applicable'
+                                            %}checked{% endif %}>
+                                        <label class="form-check-label" for="peer_ctx_na">Not Applicable</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">List of IncorrectWords</label>
+                                <textarea class="form-control" name="IncorrectWords" id="peer_incorrectWordsInput"
+                                    rows="2" readonly>{{ peer_data.get('IncorrectWords', '') }}</textarea>
+                                <button type="button" class="btn btn-sm btn-outline-secondary mt-1"
+                                    id="peer_clearWordsBtn">Clear
+                                    Selection</button>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">List of Mistakes regarding Numbers (সংখ্যা)</label>
+                                    <input type="text" class="form-control" name="NumberMistakes"
+                                        value="{{ peer_data.get('NumberMistakes', '') }}">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">List of Conjunct Mistakes (যুক্তাক্ষর)</label>
+                                    <input type="text" class="form-control" name="ConjunctMistakes"
+                                        value="{{ peer_data.get('ConjunctMistakes', '') }}">
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Notes</label>
+                                <textarea class="form-control" name="Notes"
+                                    rows="2">{{ peer_data.get('Notes', '') }}</textarea>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Comparison Preference -->
+        {% if peer_sheet_name %}
+        <div class="card mt-4 mb-5 preference-card fade-up">
+            <div class="card-header">
+                <h5 class="mb-0">Overall Preference</h5>
+            </div>
+            <div class="card-body text-center">
+                <p class="lead">Which version sounded better?</p>
+                <div class="btn-group" role="group" aria-label="Preference Selection">
+                    <input type="radio" class="btn-check" name="preference" id="pref_primary" value="{{ sheet_name }}"
+                        autocomplete="off" {% if existing_data.get('Preference')==sheet_name %}checked{% endif %}>
+                    <label class="btn btn-outline-primary btn-lg" for="pref_primary">{{ 'Male' if 'Male' in sheet_name
+                        else 'Female' if 'Female' in sheet_name else sheet_name }}</label>
+
+                    <input type="radio" class="btn-check" name="preference" id="pref_neutral" value="Equal"
+                        autocomplete="off" {% if existing_data.get('Preference')=='Equal' %}checked{% endif %}>
+                    <label class="btn btn-outline-secondary btn-lg" for="pref_neutral">No Difference / Equal</label>
+
+                    <input type="radio" class="btn-check" name="preference" id="pref_peer" value="{{ peer_sheet_name }}"
+                        autocomplete="off" {% if existing_data.get('Preference')==peer_sheet_name %}checked{% endif %}>
+                    <label class="btn btn-outline-secondary btn-lg" for="pref_peer">{{ 'Male' if 'Male' in
+                        peer_sheet_name else 'Female' if 'Female' in peer_sheet_name else peer_sheet_name }}</label>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Global Action Bar -->
+        <div class="fixed-action-bar">
+            <div class="container-xxl action-shell d-flex justify-content-between align-items-center">
+                <div class="text-start small text-muted">
+                    Save will record your preference in both files.
+                </div>
+                <button type="button" class="btn btn-primary btn-lg" id="saveAllBtn">Save All & Next</button>
+            </div>
+        </div>
+        <div style="height: 100px;"></div> <!-- Spacer -->
+
+    </div>
+</div>
+
+<script>
+    // ... existing script ...
+    // Data from server
+    const rawText = `{{ text }}`;
+    const existingIncorrectPrimary = `{{ existing_data.get('IncorrectWords', '') }}`;
+    const existingIncorrectPeer = `{{ peer_data.get('IncorrectWords', '') }}`;
+    const existingPreference = `{{ existing_data.get('Preference', '') }}`;
+
+    const hasExistingDataPrimary = {{ 'true' if existing_data else 'false' }};
+    const hasExistingDataPeer = {{ 'true' if peer_data else 'false' }};
+
+    // ... (Text display logic kept same) ...
+    const container = document.getElementById('interactive-text');
+    const primaryInput = document.getElementById('primary_incorrectWordsInput');
+    const peerInput = document.getElementById('peer_incorrectWordsInput'); // May be null if no peer
+    const words = rawText.split(/\s+/).filter(w => w.length > 0);
+    let selectedWords = new Set();
+
+    // Pre-select logic for primary form
+    if (existingIncorrectPrimary) {
+        const savedWords = existingIncorrectPrimary.split(/[\s,]+/).filter(w => w.length > 0);
+        savedWords.forEach(w => selectedWords.add(w));
+    }
+
+    function renderText() {
+        container.innerHTML = '';
+        words.forEach((word, index) => {
+            const span = document.createElement('span');
+            span.className = 'word-token';
+            span.textContent = word;
+
+            if (selectedWords.has(word)) {
+                span.classList.add('selected');
+            }
+
+            span.onclick = () => toggleWord(word, span);
+            container.appendChild(span);
+            container.appendChild(document.createTextNode(' '));
+        });
+    }
+
+    function toggleWord(word, element) {
+        if (selectedWords.has(word)) {
+            selectedWords.delete(word);
+            element.classList.remove('selected');
+        } else {
+            selectedWords.add(word);
+            element.classList.add('selected');
+        }
+        updateIncorrectWordsInputs();
+    }
+
+    function updateIncorrectWordsInputs() {
+        const incorrectWordsString = Array.from(selectedWords).join(', ');
+        primaryInput.value = incorrectWordsString;
+        if (peerInput) {
+            peerInput.value = incorrectWordsString;
+        }
+    }
+
+    document.getElementById('primary_clearWordsBtn').onclick = () => {
+        selectedWords.clear();
+        renderText();
+        updateIncorrectWordsInputs();
+    };
+    if (document.getElementById('peer_clearWordsBtn')) {
+        document.getElementById('peer_clearWordsBtn').onclick = () => {
+            selectedWords.clear();
+            renderText();
+            updateIncorrectWordsInputs();
+        };
+    }
+
+    // Initial Render
+    renderText();
+    updateIncorrectWordsInputs(); // Ensure inputs reflect initial selection
+
+
+    // Default Logic for Context
+    function applyDefaultContext(formId, hasExisting) {
+        if (!hasExisting) {
+            const form = document.getElementById(formId);
+            if (rawText.includes('?')) {
+                form.querySelector(`input[name="Context"][value="No"]`).checked = true;
+            } else {
+                form.querySelector(`input[name="Context"][value="Not Applicable"]`).checked = true;
+            }
+        }
+    }
+    applyDefaultContext('form_primary', hasExistingDataPrimary);
+    if (document.getElementById('form_peer')) {
+        applyDefaultContext('form_peer', hasExistingDataPeer);
+    }
+
+    // Set initial preference if exists (handle JS side just in case HTML 'checked' missed something dynamic)
+    if (existingPreference) {
+        const rad = document.querySelector(`input[name="preference"][value="${existingPreference}"]`);
+        if (rad) rad.checked = true;
+    }
+
+
+    // Perfect Button Logic
+    function fillPerfect(formId) {
+        const form = document.getElementById(formId);
+        form.querySelector(`input[name="Naturalness"][value="Human-like"]`).checked = true;
+        form.querySelector(`input[name="Intelligibility"][value="Yes"]`).checked = true;
+        form.querySelector(`input[name="Context"][value="Not Applicable"]`).checked = true;
+
+        // Clear other fields
+        selectedWords.clear();
+        renderText();
+        updateIncorrectWordsInputs();
+
+        form.querySelector(`input[name="NumberMistakes"]`).value = '';
+        form.querySelector(`input[name="ConjunctMistakes"]`).value = '';
+        form.querySelector(`textarea[name="Notes"]`).value = '';
+    }
+
+    // Auto-scroll sidebar to active item
+    window.onload = function () {
+        const activeItem = document.querySelector('.list-group-item.active');
+        if (activeItem) {
+            activeItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    };
+
+    document.getElementById('saveAllBtn').addEventListener('click', function (e) {
+        e.preventDefault();
+
+        const formsToSubmit = ['form_primary'];
+        if (document.getElementById('form_peer')) {
+            formsToSubmit.push('form_peer');
+        }
+
+        const allAnnotations = [];
+        let isValid = true;
+
+        // Preference Validation
+        let preference = null;
+        if (document.getElementById('form_peer')) {
+            const prefEl = document.querySelector('input[name="preference"]:checked');
+            if (prefEl) {
+                preference = prefEl.value;
+            } else {
+                // Optional: Enforce preference selection? User just said "add button... and store it". 
+                // It's better to enforce it if they are doing comparison.
+                // Let's enforce it.
+                alert("Please select which version is better (or if they are equal).");
+                return;
+            }
+        }
+
+        formsToSubmit.forEach(formId => {
+            const form = document.getElementById(formId);
+            const formData = new FormData(form);
+            const annotationData = Object.fromEntries(formData.entries());
+            const sheetName = form.dataset.sheet;
+
+            // Basic validation for required fields (Naturalness)
+            if (!annotationData.Naturalness) {
+                alert(`Please select a Naturalness rating for ${sheetName}.`);
+                isValid = false;
+            }
+
+            // Add Preference to data
+            if (preference) {
+                annotationData['Preference'] = preference;
+            }
+
+            allAnnotations.push({
+                sheet_name: sheetName,
+                item_id: '{{ item_id }}',
+                annotation: annotationData
+            });
+        });
+
+        if (!isValid) {
+            return;
+        }
+
+        // Disable button to prevent double submit
+        const btn = this;
+        const originalText = btn.innerText;
+        btn.disabled = true;
+        btn.innerText = "Saving...";
+
+        fetch('/api/save_multiple', { // Assuming a new endpoint for multiple saves
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(allAnnotations),
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    btn.innerText = "Saved!";
+
+                    // Mark current item as done in sidebar without reload
+                    const activeSidebarItem = document.querySelector('.list-group-item.active');
+                    if (activeSidebarItem && !activeSidebarItem.querySelector('.text-success')) {
+                        const badge = document.createElement('span');
+                        badge.className = 'text-success';
+                        badge.innerHTML = '&check;';
+                        activeSidebarItem.querySelector('div').appendChild(badge);
+                    }
+
+                    setTimeout(() => {
+                        // Auto-advance
+                        const nextBtn = document.getElementById('nextItemBtn');
+                        if (nextBtn) {
+                            window.location.href = nextBtn.href;
+                        } else {
+                            btn.disabled = false;
+                            btn.innerText = "Saved (Last Item)";
+                        }
+                    }, 300); // Faster transition
+
+                } else {
+                    alert('Error saving: ' + (data.message || 'Unknown error'));
+                    btn.disabled = false;
+                    btn.innerText = originalText;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Network error or server issue.');
+                btn.disabled = false;
+                btn.innerText = originalText;
+            });
+    });
+</script>
+{% endblock %}
