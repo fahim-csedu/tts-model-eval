@@ -14,26 +14,25 @@
                     <p>
                         This tool allows you to listen to two versions of a Text-to-Speech (TTS) audio (Male and Female)
                         and evaluate them based on Naturalness, Intelligibility, and Context.
-                        You will also identify specific mistakes in the text.
+                        You will also mark token-level errors and describe what kind of failure each token shows.
                     </p>
                 </section>
 
                 <section class="mb-5">
-                    <h4>2. Marking Incorrect Words</h4>
+                    <h4>2. Marking Token-Level Errors</h4>
                     <div class="alert alert-info">
-                        <strong>Feature:</strong> Interactive Text Highlighting
+                        <strong>Feature:</strong> Interactive token error editor
                     </div>
                     <p>
-                        The text displayed at the top is <strong>interactive</strong>.
-                        If you hear a mispronunciation or an error in a specific word:
+                        The transcript area inside each panel is <strong>interactive</strong>.
+                        If you hear an error on a specific word or token:
                     </p>
                     <ul>
-                        <li><span class="badge bg-secondary">Click</span> on the word in the text box.</li>
-                        <li>It will turn <span class="badge bg-danger text-decoration-line-through">Red and
-                                Strikethrough</span>.</li>
-                        <li>This word is automatically added to the <strong>"List of IncorrectWords"</strong> box for
-                            both forms.</li>
-                        <li>Click the word again to undo the selection.</li>
+                        <li><span class="badge bg-secondary">Click</span> the token in the panel you are annotating.</li>
+                        <li>That token becomes marked as an error and opens a structured error card below.</li>
+                        <li>Use the dropdowns in that card to describe the error.</li>
+                        <li>Use <strong>Remove</strong> to delete one token error, or <strong>Clear Token Errors</strong> to reset the whole panel.</li>
+                        <li>The old <strong>Incorrect Token Summary</strong> box is filled automatically from your token selections.</li>
                     </ul>
                 </section>
 
@@ -48,7 +47,7 @@
                         <li>Set <strong>Naturalness</strong> to "Human-like".</li>
                         <li>Set <strong>Intelligibility</strong> to "Yes".</li>
                         <li>Set <strong>Context</strong> to "Not Applicable".</li>
-                        <li><strong>Clear</strong> any selected incorrect words or notes.</li>
+                        <li><strong>Clear</strong> any token-level errors and notes.</li>
                     </ul>
                     <p class="text-muted small">Use this to speed up annotation for good samples!</p>
                 </section>
@@ -62,6 +61,10 @@
                             questions)?
                             <em>Select "Not Applicable" for simple statements without specific tonal requirements.</em>
                         </li>
+                        <li><strong>Error Category:</strong> What kind of token-level failure happened. Use the closest label, for example pronunciation/G2P, normalization/symbol reading, code-mix rendering, skipped token, conjunct handling, or prosody/stress.</li>
+                        <li><strong>Severity:</strong> How serious the token error is in perception. Use "Minor" for small but noticeable issues, "Moderate" for clear errors, "Major" for strong distortions, and "Critical" when the token seriously harms intelligibility or meaning.</li>
+                        <li><strong>Subsystem Guess:</strong> Your best guess about where the failure came from in the TTS stack. Choose items like text normalization, tokenizer, G2P, prosody model, acoustic model, alignment/duration, vocoder, or "Unknown" if you cannot tell.</li>
+                        <li><strong>Annotator Confidence:</strong> How sure you are about your diagnosis. Use 1 for low confidence, 3 for medium confidence, and 5 for very high confidence.</li>
                         <li><strong>Number Mistakes (সংখ্যা):</strong> List any numbers that were read incorrectly.</li>
                         <li><strong>Conjunct Mistakes (যুক্তাক্ষর):</strong> List any issues with complex characters.
                         </li>

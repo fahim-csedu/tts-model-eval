@@ -48,8 +48,60 @@ def get_item_text(sheet_name, item_id, xls=None):
         print(f"Error resolving text for {sheet_name}/{item_id}: {e}")
         return None
 
+def normalize_token_errors(raw_token_errors):
+    if raw_token_errors in (None, ''):
+        return []
+
+    token_errors = raw_token_errors
+    if isinstance(raw_token_errors, str):
+        try:
+            token_errors = json.loads(raw_token_errors)
+        except json.JSONDecodeError:
+            return []
+
+    if not isinstance(token_errors, list):
+        return []
+
+    normalized = []
+    for entry in token_errors:
+        if not isinstance(entry, dict):
+            continue
+
+        token = str(entry.get('token', '')).strip()
+        if not token:
+            continue
+
+        try:
+            token_index = int(entry.get('token_index'))
+        except (TypeError, ValueError):
+            token_index = None
+
+        normalized.append({
+            'token_index': token_index,
+            'token': token,
+            'error_category': str(entry.get('error_category', '')).strip(),
+            'severity': str(entry.get('severity', 'Moderate')).strip() or 'Moderate',
+            'subsystem_guess': str(entry.get('subsystem_guess', 'Unknown')).strip() or 'Unknown',
+            'annotator_confidence': str(entry.get('annotator_confidence', '3')).strip() or '3',
+        })
+
+    normalized.sort(key=lambda item: (
+        item['token_index'] is None,
+        item['token_index'] if item['token_index'] is not None else 10**9,
+        item['token'],
+    ))
+    return normalized
+
+def build_incorrect_words_summary(token_errors):
+    return ', '.join(entry['token'] for entry in token_errors if entry.get('token'))
+
 def build_annotation_payload(sheet_name, item_id, annotation, xls=None):
     payload = dict(annotation or {})
+    token_errors = normalize_token_errors(payload.get('TokenErrors'))
+    if token_errors or 'TokenErrors' in payload:
+        payload['TokenErrors'] = token_errors
+        payload['IncorrectWords'] = build_incorrect_words_summary(token_errors)
+
     text = get_item_text(sheet_name, item_id, xls=xls)
     if text is not None:
         payload['Text'] = text

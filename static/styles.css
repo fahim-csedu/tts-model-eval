@@ -183,13 +183,42 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
   font-size: 1.05rem;
 }
 
+.annotation-brief {
+  background: linear-gradient(135deg, rgba(15, 118, 110, 0.08), rgba(14, 165, 233, 0.08));
+  border: 1px solid rgba(15, 118, 110, 0.14);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+}
+
+.annotation-brief__text {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.token-workbench {
+  background: rgba(248, 250, 252, 0.85);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+}
+
+.token-meta-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
+}
+
 .word-token {
   display: inline-block;
   padding: 4px 8px;
   margin: 2px;
+  border: 1px solid transparent;
   border-radius: 999px;
   transition: all 0.2s ease;
   cursor: pointer;
+  background: transparent;
 }
 
 .word-token:hover {
@@ -204,7 +233,11 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
 .word-token.selected {
   background-color: #ef4444;
   color: white;
-  text-decoration: line-through;
+}
+
+.word-token.active {
+  border-color: rgba(15, 118, 110, 0.45);
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12);
 }
 
 .audio-card.active-target {
@@ -234,6 +267,75 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
   width: 100%;
   border-radius: 999px;
   background: #f8fafc;
+}
+
+.token-errors-section {
+  border-top: 1px solid rgba(226, 232, 240, 0.9);
+  padding-top: 16px;
+}
+
+.token-error-list {
+  display: grid;
+  gap: 12px;
+}
+
+.token-error-row {
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  background: rgba(248, 250, 252, 0.92);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.token-error-row:hover {
+  transform: translateY(-1px);
+}
+
+.token-error-row.is-active {
+  border-color: rgba(15, 118, 110, 0.4);
+  box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.08);
+}
+
+.token-error-row__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.token-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 42px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(15, 118, 110, 0.12);
+  color: var(--accent-strong);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.token-text {
+  font-weight: 700;
+  margin-left: 8px;
+}
+
+.token-error-empty {
+  border: 1px dashed rgba(148, 163, 184, 0.45);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  text-align: center;
+  color: var(--muted);
+  background: rgba(248, 250, 252, 0.7);
+}
+
+.form-label-sm {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--muted);
+  margin-bottom: 4px;
 }
 
 .preference-card {
@@ -319,5 +421,11 @@ h1, h2, h3, h4, h5, h6, .navbar-brand {
 
   .fixed-action-bar .action-shell {
     border-radius: 20px;
+  }
+
+  .token-meta-row,
+  .token-error-row__header {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }

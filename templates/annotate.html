@@ -1,8 +1,126 @@
 {% extends 'base.html' %}
 
+{% macro render_panel(panel_key, panel_title, chip_label, sheet_value, form_data, is_current=False) %}
+<div class="card audio-card fade-up" id="{{ panel_key }}PanelCard" data-panel-card="{{ panel_key }}">
+    <div class="card-header">
+        <div class="panel-header">
+            <h5 class="mb-0">{{ panel_title }}{% if is_current %} (Current){% endif %}</h5>
+            <span class="panel-chip">{{ chip_label }}</span>
+        </div>
+    </div>
+    <div class="card-body">
+        <audio controls class="w-100 mb-3" id="{{ panel_key }}Audio">
+            <source src="/audio/{{ sheet_value }}/{{ item_id }}.wav" type="audio/wav">
+            Your browser does not support the audio element.
+        </audio>
+
+        <div class="token-workbench mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <small class="text-muted">Transcript: click a token to mark and classify an error for this panel.</small>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="{{ panel_key }}_clearTokenErrorsBtn">Clear Token Errors</button>
+            </div>
+            <div id="interactive-text-{{ panel_key }}" class="interactive-text"></div>
+            <div class="token-meta-row">
+                <small class="text-muted" id="selectionMeta{{ panel_key|capitalize }}"></small>
+                <small class="text-muted" id="activeTokenMeta{{ panel_key|capitalize }}"></small>
+            </div>
+        </div>
+
+        <button type="button" class="btn btn-success w-100 mb-3" onclick="fillPerfect('form_{{ panel_key }}')">
+            Perfect: human-like, intelligible, no token errors
+        </button>
+
+        <form id="form_{{ panel_key }}" data-sheet="{{ sheet_value }}" data-panel="{{ panel_key }}">
+            <div class="mb-3">
+                <label class="form-label d-block">Naturalness</label>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="Naturalness" id="{{ panel_key }}_nat_human" value="Human-like" {% if form_data.get('Naturalness') == 'Human-like' %}checked{% endif %} required>
+                    <label class="form-check-label" for="{{ panel_key }}_nat_human">Human-like</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="Naturalness" id="{{ panel_key }}_nat_slightly" value="Slightly Robotic" {% if form_data.get('Naturalness') == 'Slightly Robotic' %}checked{% endif %}>
+                    <label class="form-check-label" for="{{ panel_key }}_nat_slightly">Slightly Robotic</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="Naturalness" id="{{ panel_key }}_nat_robotic" value="Very Robotic" {% if form_data.get('Naturalness') == 'Very Robotic' %}checked{% endif %}>
+                    <label class="form-check-label" for="{{ panel_key }}_nat_robotic">Very Robotic</label>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label d-block">Intelligibility</label>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="Intelligibility" id="{{ panel_key }}_int_yes" value="Yes" {% if form_data.get('Intelligibility') == 'Yes' %}checked{% endif %}>
+                        <label class="form-check-label" for="{{ panel_key }}_int_yes">Yes</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="Intelligibility" id="{{ panel_key }}_int_mostly" value="Mostly" {% if form_data.get('Intelligibility') == 'Mostly' %}checked{% endif %}>
+                        <label class="form-check-label" for="{{ panel_key }}_int_mostly">Mostly</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="Intelligibility" id="{{ panel_key }}_int_barely" value="Barely" {% if form_data.get('Intelligibility') == 'Barely' %}checked{% endif %}>
+                        <label class="form-check-label" for="{{ panel_key }}_int_barely">Barely</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="Intelligibility" id="{{ panel_key }}_int_no" value="No" {% if form_data.get('Intelligibility') == 'No' %}checked{% endif %}>
+                        <label class="form-check-label" for="{{ panel_key }}_int_no">No</label>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label d-block">Context</label>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="Context" id="{{ panel_key }}_ctx_yes" value="Yes" {% if form_data.get('Context') == 'Yes' %}checked{% endif %}>
+                        <label class="form-check-label" for="{{ panel_key }}_ctx_yes">Yes</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="Context" id="{{ panel_key }}_ctx_no" value="No" {% if form_data.get('Context') == 'No' %}checked{% endif %}>
+                        <label class="form-check-label" for="{{ panel_key }}_ctx_no">No</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="Context" id="{{ panel_key }}_ctx_na" value="Not Applicable" {% if form_data.get('Context') == 'Not Applicable' %}checked{% endif %}>
+                        <label class="form-check-label" for="{{ panel_key }}_ctx_na">Not Applicable</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="token-errors-section mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <label class="form-label mb-0">Token-Level Errors</label>
+                    <small class="text-muted">Each marked token needs a category.</small>
+                </div>
+                <input type="hidden" name="TokenErrors" id="{{ panel_key }}_tokenErrorsJson" value="">
+                <div class="token-error-list" id="{{ panel_key }}_tokenErrorList"></div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Incorrect Token Summary</label>
+                <textarea class="form-control" name="IncorrectWords" id="{{ panel_key }}_incorrectWordsInput" rows="2" readonly>{{ form_data.get('IncorrectWords', '') }}</textarea>
+                <div class="form-text">Auto-generated from token-level marks to keep older exports working.</div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Number / Symbol Notes</label>
+                    <input type="text" class="form-control" name="NumberMistakes" value="{{ form_data.get('NumberMistakes', '') }}">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Conjunct / G2P Notes</label>
+                    <input type="text" class="form-control" name="ConjunctMistakes" value="{{ form_data.get('ConjunctMistakes', '') }}">
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Notes</label>
+                <textarea class="form-control" name="Notes" rows="2">{{ form_data.get('Notes', '') }}</textarea>
+            </div>
+        </form>
+    </div>
+</div>
+{% endmacro %}
+
 {% block content %}
 <div class="row g-4">
-    <!-- Sidebar -->
     <div class="col-lg-3 col-md-4">
         <div class="sidebar fade-up">
             <div class="sidebar-header">
@@ -11,21 +129,19 @@
             </div>
             <div class="list-group list-group-flush">
             {% for item in items %}
-            <a href="/annotate/{{ sheet_name }}/{{ item.id }}"
-                class="list-group-item list-group-item-action {{ 'active' if item.id == item_id else '' }}">
-                <div class="d-flex w-100 justify-content-between">
-                    <span class="text-truncate" style="max-width: 85%;">{{ item.id }}</span>
-                    {% if item.status == 'Annotated' %}
-                    <span class="text-success">&check;</span>
-                    {% endif %}
-                </div>
-            </a>
+                <a href="/annotate/{{ sheet_name }}/{{ item.id }}" class="list-group-item list-group-item-action {{ 'active' if item.id == item_id else '' }}">
+                    <div class="d-flex w-100 justify-content-between">
+                        <span class="text-truncate" style="max-width: 85%;">{{ item.id }}</span>
+                        {% if item.status == 'Annotated' %}
+                        <span class="text-success">&check;</span>
+                        {% endif %}
+                    </div>
+                </a>
             {% endfor %}
             </div>
         </div>
     </div>
 
-    <!-- Main Content -->
     <div class="col-lg-9 col-md-8">
         <div class="card mb-4 annotate-toolbar fade-up">
             <div class="card-body">
@@ -33,372 +149,164 @@
                     <h5 class="card-title">
                         ID: {{ item_id }}
                         <a href="/help" target="_blank" class="text-decoration-none ms-2" title="How to use?">
-                            <small>❓</small>
+                            <small>?</small>
                         </a>
                     </h5>
                     <div>
                         {% if prev_id %}
-                        <a href="/annotate/{{ sheet_name }}/{{ prev_id }}"
-                            class="btn btn-outline-secondary btn-sm">&larr; Prev</a>
+                        <a href="/annotate/{{ sheet_name }}/{{ prev_id }}" class="btn btn-outline-secondary btn-sm">&larr; Prev</a>
                         {% endif %}
                         {% if next_id %}
-                        <a href="/annotate/{{ sheet_name }}/{{ next_id }}" class="btn btn-outline-secondary btn-sm"
-                            id="nextItemBtn">Next &rarr;</a>
+                        <a href="/annotate/{{ sheet_name }}/{{ next_id }}" class="btn btn-outline-secondary btn-sm" id="nextItemBtn">Next &rarr;</a>
                         {% endif %}
                     </div>
                 </div>
-
-                <div class="mb-2">
-                    <small class="text-muted mb-0">Annotate each panel independently: male and female are side by side.</small>
+                <div class="annotation-brief">
+                    <div class="annotation-brief__text">{{ text }}</div>
+                    <small class="text-muted">Mark token-level errors below for each panel independently. The text here is the source prompt, not a transcript from the model.</small>
                 </div>
             </div>
         </div>
 
-        <!-- Comparison Container -->
         <div class="row">
-
-            <!-- Primary Panel -->
             <div class="{{ 'col-md-6' if peer_sheet_name else 'col-md-12' }}">
-                <div class="card audio-card fade-up" id="primaryPanelCard">
-                    <div class="card-header">
-                        <div class="panel-header">
-                            <h5 class="mb-0">{{ 'Male' if 'Male' in sheet_name else 'Female' if 'Female' in sheet_name else
-                                sheet_name }} (Current)</h5>
-                            <span class="panel-chip">Primary</span>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <audio controls class="w-100 mb-2" id="primaryAudio">
-                            <source src="/audio/{{ sheet_name }}/{{ item_id }}.wav" type="audio/wav">
-                            Your browser does not support the audio element.
-                        </audio>
-                        <div class="mb-3">
-                            <small class="text-muted d-block mb-1">Transcript (Primary): click incorrect words</small>
-                            <div id="interactive-text-primary" class="interactive-text"></div>
-                            <small class="text-muted" id="selectionMetaPrimary"></small>
-                        </div>
-                        <button type="button" class="btn btn-success w-100 mb-3" onclick="fillPerfect('form_primary')">
-                            ✨ Perfect (Human-like, Intelligibility: Yes, Context: N/A)
-                        </button>
-
-                        <!-- Form Primary -->
-                        <form id="form_primary" data-sheet="{{ sheet_name }}">
-                            <div class="mb-3">
-                                <label class="form-label d-block">Naturalness: Does it sound robotic or human?</label>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" name="Naturalness"
-                                        id="primary_nat_human" value="Human-like" {% if
-                                        existing_data.get('Naturalness')=='Human-like' %}checked{% endif %} required>
-                                    <label class="form-check-label" for="primary_nat_human">Human-like</label>
-                                </div>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" name="Naturalness"
-                                        id="primary_nat_slightly" value="Slightly Robotic" {% if
-                                        existing_data.get('Naturalness')=='Slightly Robotic' %}checked{% endif %}>
-                                    <label class="form-check-label" for="primary_nat_slightly">Slightly Robotic</label>
-                                </div>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" name="Naturalness"
-                                        id="primary_nat_robotic" value="Very Robotic" {% if
-                                        existing_data.get('Naturalness')=='Very Robotic' %}checked{% endif %}>
-                                    <label class="form-check-label" for="primary_nat_robotic">Very Robotic</label>
-                                </div>
-                            </div>
-
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label d-block">Intelligibility: Can you understand every word
-                                        clearly?</label>
-                                    <div class="form-check form-check-inline">
-                                        <input class="form-check-input" type="radio" name="Intelligibility"
-                                            id="primary_int_yes" value="Yes" {% if
-                                            existing_data.get('Intelligibility')=='Yes' %}checked{% endif %}>
-                                        <label class="form-check-label" for="primary_int_yes">Yes</label>
-                                    </div>
-                                    <div class="form-check form-check-inline">
-                                        <input class="form-check-input" type="radio" name="Intelligibility"
-                                            id="primary_int_mostly" value="Mostly" {% if
-                                            existing_data.get('Intelligibility')=='Mostly' %}checked{% endif %}>
-                                        <label class="form-check-label" for="primary_int_mostly">Mostly</label>
-                                    </div>
-                                    <div class="form-check form-check-inline">
-                                        <input class="form-check-input" type="radio" name="Intelligibility"
-                                            id="primary_int_barely" value="Barely" {% if
-                                            existing_data.get('Intelligibility')=='Barely' %}checked{% endif %}>
-                                        <label class="form-check-label" for="primary_int_barely">Barely</label>
-                                    </div>
-                                    <div class="form-check form-check-inline">
-                                        <input class="form-check-input" type="radio" name="Intelligibility"
-                                            id="primary_int_no" value="No" {% if
-                                            existing_data.get('Intelligibility')=='No' %}checked{% endif %}>
-                                        <label class="form-check-label" for="primary_int_no">No</label>
-                                    </div>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label d-block">Context: Did it get the question/sarcasm tone
-                                        right?</label>
-                                    <div class="form-check form-check-inline">
-                                        <input class="form-check-input" type="radio" name="Context" id="primary_ctx_yes"
-                                            value="Yes" {% if existing_data.get('Context')=='Yes' %}checked{% endif %}>
-                                        <label class="form-check-label" for="primary_ctx_yes">Yes</label>
-                                    </div>
-                                    <div class="form-check form-check-inline">
-                                        <input class="form-check-input" type="radio" name="Context" id="primary_ctx_no"
-                                            value="No" {% if existing_data.get('Context')=='No' %}checked{% endif %}>
-                                        <label class="form-check-label" for="primary_ctx_no">No</label>
-                                    </div>
-                                    <div class="form-check form-check-inline">
-                                        <input class="form-check-input" type="radio" name="Context" id="primary_ctx_na"
-                                            value="Not Applicable" {% if existing_data.get('Context')=='Not Applicable'
-                                            %}checked{% endif %}>
-                                        <label class="form-check-label" for="primary_ctx_na">Not Applicable</label>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="form-label">List of IncorrectWords</label>
-                                <textarea class="form-control" name="IncorrectWords" id="primary_incorrectWordsInput"
-                                    rows="2" readonly>{{ existing_data.get('IncorrectWords', '') }}</textarea>
-                                <button type="button" class="btn btn-sm btn-outline-secondary mt-1"
-                                    id="primary_clearWordsBtn">Clear
-                                    Selection</button>
-                            </div>
-
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">List of Mistakes regarding Numbers (সংখ্যা)</label>
-                                    <input type="text" class="form-control" name="NumberMistakes"
-                                        value="{{ existing_data.get('NumberMistakes', '') }}">
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">List of Conjunct Mistakes (যুক্তাক্ষর)</label>
-                                    <input type="text" class="form-control" name="ConjunctMistakes"
-                                        value="{{ existing_data.get('ConjunctMistakes', '') }}">
-                                </div>
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="form-label">Notes</label>
-                                <textarea class="form-control" name="Notes"
-                                    rows="2">{{ existing_data.get('Notes', '') }}</textarea>
-                            </div>
-                        </form>
-                    </div>
-                </div>
+                {{ render_panel(
+                    'primary',
+                    'Male' if 'Male' in sheet_name else 'Female' if 'Female' in sheet_name else sheet_name,
+                    'Primary',
+                    sheet_name,
+                    existing_data,
+                    True
+                ) }}
             </div>
 
             {% if peer_sheet_name %}
-            <!-- Peer Panel -->
             <div class="col-md-6">
-                <div class="card audio-card fade-up" id="peerPanelCard">
-                    <div class="card-header">
-                        <div class="panel-header">
-                            <h5 class="mb-0">{{ 'Male' if 'Male' in peer_sheet_name else 'Female' if 'Female' in
-                                peer_sheet_name else peer_sheet_name }}</h5>
-                            <span class="panel-chip">Peer</span>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <audio controls class="w-100 mb-2" id="peerAudio">
-                            <source src="/audio/{{ peer_sheet_name }}/{{ item_id }}.wav" type="audio/wav">
-                            Your browser does not support the audio element.
-                        </audio>
-                        <div class="mb-3">
-                            <small class="text-muted d-block mb-1">Transcript (Peer): click incorrect words</small>
-                            <div id="interactive-text-peer" class="interactive-text"></div>
-                            <small class="text-muted" id="selectionMetaPeer"></small>
-                        </div>
-                        <button type="button" class="btn btn-success w-100 mb-3" onclick="fillPerfect('form_peer')">
-                            ✨ Perfect (Human-like, Intelligibility: Yes, Context: N/A)
-                        </button>
-
-                        <!-- Form Peer -->
-                        <form id="form_peer" data-sheet="{{ peer_sheet_name }}">
-                            <div class="mb-3">
-                                <label class="form-label d-block">Naturalness: Does it sound robotic or human?</label>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" name="Naturalness" id="peer_nat_human"
-                                        value="Human-like" {% if peer_data.get('Naturalness')=='Human-like' %}checked{%
-                                        endif %} required>
-                                    <label class="form-check-label" for="peer_nat_human">Human-like</label>
-                                </div>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" name="Naturalness"
-                                        id="peer_nat_slightly" value="Slightly Robotic" {% if
-                                        peer_data.get('Naturalness')=='Slightly Robotic' %}checked{% endif %}>
-                                    <label class="form-check-label" for="peer_nat_slightly">Slightly Robotic</label>
-                                </div>
-                                <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" name="Naturalness"
-                                        id="peer_nat_robotic" value="Very Robotic" {% if
-                                        peer_data.get('Naturalness')=='Very Robotic' %}checked{% endif %}>
-                                    <label class="form-check-label" for="peer_nat_robotic">Very Robotic</label>
-                                </div>
-                            </div>
-
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label d-block">Intelligibility: Can you understand every word
-                                        clearly?</label>
-                                    <div class="form-check form-check-inline">
-                                        <input class="form-check-input" type="radio" name="Intelligibility"
-                                            id="peer_int_yes" value="Yes" {% if peer_data.get('Intelligibility')=='Yes'
-                                            %}checked{% endif %}>
-                                        <label class="form-check-label" for="peer_int_yes">Yes</label>
-                                    </div>
-                                    <div class="form-check form-check-inline">
-                                        <input class="form-check-input" type="radio" name="Intelligibility"
-                                            id="peer_int_mostly" value="Mostly" {% if
-                                            peer_data.get('Intelligibility')=='Mostly' %}checked{% endif %}>
-                                        <label class="form-check-label" for="peer_int_mostly">Mostly</label>
-                                    </div>
-                                    <div class="form-check form-check-inline">
-                                        <input class="form-check-input" type="radio" name="Intelligibility"
-                                            id="peer_int_barely" value="Barely" {% if
-                                            peer_data.get('Intelligibility')=='Barely' %}checked{% endif %}>
-                                        <label class="form-check-label" for="peer_int_barely">Barely</label>
-                                    </div>
-                                    <div class="form-check form-check-inline">
-                                        <input class="form-check-input" type="radio" name="Intelligibility"
-                                            id="peer_int_no" value="No" {% if peer_data.get('Intelligibility')=='No'
-                                            %}checked{% endif %}>
-                                        <label class="form-check-label" for="peer_int_no">No</label>
-                                    </div>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label d-block">Context: Did it get the question/sarcasm tone
-                                        right?</label>
-                                    <div class="form-check form-check-inline">
-                                        <input class="form-check-input" type="radio" name="Context" id="peer_ctx_yes"
-                                            value="Yes" {% if peer_data.get('Context')=='Yes' %}checked{% endif %}>
-                                        <label class="form-check-label" for="peer_ctx_yes">Yes</label>
-                                    </div>
-                                    <div class="form-check form-check-inline">
-                                        <input class="form-check-input" type="radio" name="Context" id="peer_ctx_no"
-                                            value="No" {% if peer_data.get('Context')=='No' %}checked{% endif %}>
-                                        <label class="form-check-label" for="peer_ctx_no">No</label>
-                                    </div>
-                                    <div class="form-check form-check-inline">
-                                        <input class="form-check-input" type="radio" name="Context" id="peer_ctx_na"
-                                            value="Not Applicable" {% if peer_data.get('Context')=='Not Applicable'
-                                            %}checked{% endif %}>
-                                        <label class="form-check-label" for="peer_ctx_na">Not Applicable</label>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="form-label">List of IncorrectWords</label>
-                                <textarea class="form-control" name="IncorrectWords" id="peer_incorrectWordsInput"
-                                    rows="2" readonly>{{ peer_data.get('IncorrectWords', '') }}</textarea>
-                                <button type="button" class="btn btn-sm btn-outline-secondary mt-1"
-                                    id="peer_clearWordsBtn">Clear
-                                    Selection</button>
-                            </div>
-
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">List of Mistakes regarding Numbers (সংখ্যা)</label>
-                                    <input type="text" class="form-control" name="NumberMistakes"
-                                        value="{{ peer_data.get('NumberMistakes', '') }}">
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">List of Conjunct Mistakes (যুক্তাক্ষর)</label>
-                                    <input type="text" class="form-control" name="ConjunctMistakes"
-                                        value="{{ peer_data.get('ConjunctMistakes', '') }}">
-                                </div>
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="form-label">Notes</label>
-                                <textarea class="form-control" name="Notes"
-                                    rows="2">{{ peer_data.get('Notes', '') }}</textarea>
-                            </div>
-                        </form>
-                    </div>
-                </div>
+                {{ render_panel(
+                    'peer',
+                    'Male' if 'Male' in peer_sheet_name else 'Female' if 'Female' in peer_sheet_name else peer_sheet_name,
+                    'Peer',
+                    peer_sheet_name,
+                    peer_data
+                ) }}
             </div>
             {% endif %}
         </div>
 
-        <!-- Comparison Preference -->
         {% if peer_sheet_name %}
         <div class="card mt-4 mb-5 preference-card fade-up">
             <div class="card-header">
                 <h5 class="mb-0">Overall Preference</h5>
             </div>
             <div class="card-body text-center">
-                <p class="lead">Which version sounded better?</p>
-                <div class="btn-group" role="group" aria-label="Preference Selection">
-                    <input type="radio" class="btn-check" name="preference" id="pref_primary" value="{{ sheet_name }}"
-                        autocomplete="off" {% if existing_data.get('Preference')==sheet_name %}checked{% endif %}>
-                    <label class="btn btn-outline-primary btn-lg" for="pref_primary">{{ 'Male' if 'Male' in sheet_name
-                        else 'Female' if 'Female' in sheet_name else sheet_name }}</label>
+                <p class="lead">Which version sounded better overall?</p>
+                <div class="btn-group preference-group" role="group" aria-label="Preference Selection">
+                    <input type="radio" class="btn-check" name="preference" id="pref_primary" value="{{ sheet_name }}" autocomplete="off" {% if existing_data.get('Preference') == sheet_name %}checked{% endif %}>
+                    <label class="btn btn-outline-primary btn-lg" for="pref_primary">{{ 'Male' if 'Male' in sheet_name else 'Female' if 'Female' in sheet_name else sheet_name }}</label>
 
-                    <input type="radio" class="btn-check" name="preference" id="pref_neutral" value="Equal"
-                        autocomplete="off" {% if existing_data.get('Preference')=='Equal' %}checked{% endif %}>
-                    <label class="btn btn-outline-secondary btn-lg" for="pref_neutral">No Difference / Equal</label>
+                    <input type="radio" class="btn-check" name="preference" id="pref_neutral" value="Equal" autocomplete="off" {% if existing_data.get('Preference') == 'Equal' %}checked{% endif %}>
+                    <label class="btn btn-outline-secondary btn-lg" for="pref_neutral">Equal</label>
 
-                    <input type="radio" class="btn-check" name="preference" id="pref_peer" value="{{ peer_sheet_name }}"
-                        autocomplete="off" {% if existing_data.get('Preference')==peer_sheet_name %}checked{% endif %}>
-                    <label class="btn btn-outline-secondary btn-lg" for="pref_peer">{{ 'Male' if 'Male' in
-                        peer_sheet_name else 'Female' if 'Female' in peer_sheet_name else peer_sheet_name }}</label>
+                    <input type="radio" class="btn-check" name="preference" id="pref_peer" value="{{ peer_sheet_name }}" autocomplete="off" {% if existing_data.get('Preference') == peer_sheet_name %}checked{% endif %}>
+                    <label class="btn btn-outline-secondary btn-lg" for="pref_peer">{{ 'Male' if 'Male' in peer_sheet_name else 'Female' if 'Female' in peer_sheet_name else peer_sheet_name }}</label>
                 </div>
             </div>
         </div>
         {% endif %}
 
-        <!-- Global Action Bar -->
         <div class="fixed-action-bar">
             <div class="container-xxl action-shell d-flex justify-content-between align-items-center">
                 <div class="text-start small text-muted">
-                    Save will record your preference in both files.
+                    Save records structured token errors plus the overall preference.
                 </div>
                 <button type="button" class="btn btn-primary btn-lg" id="saveAllBtn">Save All & Next</button>
             </div>
         </div>
-        <div style="height: 100px;"></div> <!-- Spacer -->
-
+        <div style="height: 100px;"></div>
     </div>
 </div>
 
 <script>
     const rawText = {{ text | tojson }};
-    const existingIncorrectPrimary = {{ existing_data.get('IncorrectWords', '') | tojson }};
-    const existingIncorrectPeer = {{ peer_data.get('IncorrectWords', '') | tojson }};
+    const existingPrimaryData = {{ existing_data | tojson }};
+    const existingPeerData = {{ peer_data | tojson }};
     const existingPreference = {{ existing_data.get('Preference', '') | tojson }};
-
     const hasExistingDataPrimary = {{ 'true' if existing_data else 'false' }};
     const hasExistingDataPeer = {{ 'true' if peer_data else 'false' }};
     const hasPeer = {{ 'true' if peer_sheet_name else 'false' }};
+    const primarySheetName = {{ sheet_name | tojson }};
+    const peerSheetName = {{ (peer_sheet_name or '') | tojson }};
 
-    const primaryInput = document.getElementById('primary_incorrectWordsInput');
-    const peerInput = document.getElementById('peer_incorrectWordsInput');
-    const words = rawText.split(/\s+/).filter(w => w.length > 0);
+    const ERROR_CATEGORIES = [
+        'Mispronunciation / G2P',
+        'Normalization / Symbol',
+        'Code-mix rendering',
+        'Prosody / Stress',
+        'Skipped token',
+        'Inserted / Extra token',
+        'Conjunct handling',
+        'Segmentation / pause',
+        'Other'
+    ];
+    const SEVERITY_LEVELS = ['Minor', 'Moderate', 'Major', 'Critical'];
+    const SUBSYSTEM_GUESSES = [
+        'Text normalization',
+        'Tokenizer',
+        'G2P',
+        'Prosody model',
+        'Acoustic model',
+        'Alignment / duration',
+        'Vocoder',
+        'Unknown'
+    ];
+    const CONFIDENCE_LEVELS = [
+        { value: '1', label: '1 - Low' },
+        { value: '2', label: '2' },
+        { value: '3', label: '3 - Medium' },
+        { value: '4', label: '4' },
+        { value: '5', label: '5 - High' }
+    ];
 
+    const words = rawText.split(/\s+/).filter(Boolean);
     let activePanel = 'primary';
     let isDirty = false;
-    const selectedWordIndexes = { primary: new Set(), peer: new Set() };
-    const panelConfig = {
-        primary: {
-            label: 'Primary',
-            container: document.getElementById('interactive-text-primary'),
-            selectionMeta: document.getElementById('selectionMetaPrimary'),
-            card: document.getElementById('primaryPanelCard'),
-            input: primaryInput
-        },
-        peer: {
-            label: 'Peer',
-            container: document.getElementById('interactive-text-peer'),
-            selectionMeta: document.getElementById('selectionMetaPeer'),
-            card: document.getElementById('peerPanelCard'),
-            input: peerInput
-        }
+
+    const panelState = {
+        primary: buildPanelState('primary', existingPrimaryData),
+        peer: hasPeer ? buildPanelState('peer', existingPeerData) : null
     };
+
+    function buildPanelState(panel, annotationData) {
+        return {
+            panel,
+            annotationData: annotationData || {},
+            tokenErrors: hydrateTokenErrors(annotationData || {}),
+            activeTokenIndex: null,
+            container: document.getElementById(`interactive-text-${panel}`),
+            selectionMeta: document.getElementById(`selectionMeta${capitalize(panel)}`),
+            activeTokenMeta: document.getElementById(`activeTokenMeta${capitalize(panel)}`),
+            tokenErrorList: document.getElementById(`${panel}_tokenErrorList`),
+            tokenErrorsInput: document.getElementById(`${panel}_tokenErrorsJson`),
+            incorrectWordsInput: document.getElementById(`${panel}_incorrectWordsInput`),
+            card: document.getElementById(`${panel}PanelCard`)
+        };
+    }
+
+    function capitalize(value) {
+        return value.charAt(0).toUpperCase() + value.slice(1);
+    }
 
     function markDirty() {
         isDirty = true;
+    }
+
+    function escapeHtml(value) {
+        return String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
     }
 
     function sanitizeToken(token) {
@@ -410,105 +318,320 @@
 
     function parseSavedWords(value) {
         if (!value) return [];
-        const commaSplit = value.split(',').map(v => v.trim()).filter(Boolean);
+        const commaSplit = value.split(',').map((entry) => entry.trim()).filter(Boolean);
         if (commaSplit.length > 1) return commaSplit;
-        return value.split(/\s+/).map(v => v.trim()).filter(Boolean);
+        return value.split(/\s+/).map((entry) => entry.trim()).filter(Boolean);
     }
 
-    function hydrateSelectionFromSaved(panel, savedValue) {
-        const savedWords = parseSavedWords(savedValue);
-        const usedIndexes = new Set();
+    function normalizeTokenErrors(rawValue) {
+        if (!rawValue) return [];
 
-        savedWords.forEach(savedWord => {
+        let parsed = rawValue;
+        if (typeof rawValue === 'string') {
+            try {
+                parsed = JSON.parse(rawValue);
+            } catch (error) {
+                return [];
+            }
+        }
+
+        if (!Array.isArray(parsed)) return [];
+
+        return parsed
+            .map((entry) => {
+                const token = String(entry.token || '').trim();
+                const numericIndex = Number(entry.token_index);
+                return {
+                    token_index: Number.isFinite(numericIndex) ? numericIndex : null,
+                    token,
+                    error_category: String(entry.error_category || '').trim(),
+                    severity: String(entry.severity || 'Moderate').trim() || 'Moderate',
+                    subsystem_guess: String(entry.subsystem_guess || 'Unknown').trim() || 'Unknown',
+                    annotator_confidence: String(entry.annotator_confidence || '3').trim() || '3'
+                };
+            })
+            .filter((entry) => entry.token)
+            .sort(sortTokenErrors);
+    }
+
+    function deriveLegacyTokenErrors(incorrectWords) {
+        const savedWords = parseSavedWords(incorrectWords);
+        const usedIndexes = new Set();
+        const derived = [];
+
+        savedWords.forEach((savedWord) => {
             const target = sanitizeToken(savedWord);
             for (let idx = 0; idx < words.length; idx += 1) {
                 if (usedIndexes.has(idx)) continue;
                 if (sanitizeToken(words[idx]) === target) {
-                    selectedWordIndexes[panel].add(idx);
                     usedIndexes.add(idx);
+                    derived.push(createTokenError(idx));
                     break;
                 }
             }
         });
+
+        return derived.sort(sortTokenErrors);
     }
 
-    function serializeSelection(panel) {
-        return Array
-            .from(selectedWordIndexes[panel])
-            .sort((a, b) => a - b)
-            .map(idx => words[idx])
-            .join(', ');
+    function hydrateTokenErrors(annotationData) {
+        const structured = normalizeTokenErrors(annotationData.TokenErrors);
+        if (structured.length) return structured;
+        return deriveLegacyTokenErrors(annotationData.IncorrectWords || '');
     }
 
-    function updateIncorrectWordsInput(panel) {
-        const value = serializeSelection(panel);
-        const input = panelConfig[panel].input;
-        if (input) input.value = value;
+    function sortTokenErrors(left, right) {
+        const leftIndex = left.token_index === null ? Number.MAX_SAFE_INTEGER : left.token_index;
+        const rightIndex = right.token_index === null ? Number.MAX_SAFE_INTEGER : right.token_index;
+        return leftIndex - rightIndex || left.token.localeCompare(right.token);
     }
 
-    function updateSelectionMeta(panel) {
-        const cfg = panelConfig[panel];
-        if (!cfg.selectionMeta) return;
-        const count = selectedWordIndexes[panel].size;
-        cfg.selectionMeta.textContent = `${cfg.label}: ${count} incorrect word(s) selected`;
+    function createTokenError(tokenIndex) {
+        return {
+            token_index: tokenIndex,
+            token: words[tokenIndex] || '',
+            error_category: '',
+            severity: 'Moderate',
+            subsystem_guess: 'Unknown',
+            annotator_confidence: '3'
+        };
     }
 
-    function toggleWord(panel, index) {
-        const activeSet = selectedWordIndexes[panel];
-        if (activeSet.has(index)) {
-            activeSet.delete(index);
-        } else {
-            activeSet.add(index);
-        }
-        updateIncorrectWordsInput(panel);
-        renderText(panel);
-        updateSelectionMeta(panel);
-        markDirty();
-    }
-
-    function renderText(panel) {
-        const cfg = panelConfig[panel];
-        if (!cfg.container) return;
-        const activeSet = selectedWordIndexes[panel];
-        cfg.container.innerHTML = '';
-        words.forEach((word, index) => {
-            const span = document.createElement('span');
-            span.className = 'word-token';
-            span.textContent = word;
-            span.setAttribute('role', 'button');
-            span.setAttribute('tabindex', '0');
-            span.setAttribute('aria-pressed', activeSet.has(index) ? 'true' : 'false');
-            span.setAttribute('aria-label', `${panel} ${word} (${index + 1})`);
-
-            if (activeSet.has(index)) {
-                span.classList.add('selected');
-            }
-
-            span.addEventListener('click', () => {
-                setActivePanel(panel);
-                toggleWord(panel, index);
-            });
-            span.addEventListener('keydown', (event) => {
-                if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault();
-                    setActivePanel(panel);
-                    toggleWord(panel, index);
-                }
-            });
-
-            cfg.container.appendChild(span);
-            cfg.container.appendChild(document.createTextNode(' '));
-        });
+    function getTokenError(panel, tokenIndex) {
+        return panelState[panel].tokenErrors.find((entry) => entry.token_index === tokenIndex);
     }
 
     function setActivePanel(panel) {
         activePanel = panel;
-        if (panelConfig.primary.card) panelConfig.primary.card.classList.toggle('active-target', panel === 'primary');
-        if (panelConfig.peer.card) panelConfig.peer.card.classList.toggle('active-target', panel === 'peer');
+        if (panelState.primary && panelState.primary.card) {
+            panelState.primary.card.classList.toggle('active-target', panel === 'primary');
+        }
+        if (panelState.peer && panelState.peer.card) {
+            panelState.peer.card.classList.toggle('active-target', panel === 'peer');
+        }
     }
 
-    const primarySheetName = {{ sheet_name | tojson }};
-    const peerSheetName = {{ (peer_sheet_name or '') | tojson }};
+    function setActiveToken(panel, tokenIndex) {
+        const state = panelState[panel];
+        if (!state) return;
+        state.activeTokenIndex = tokenIndex;
+        renderText(panel);
+        renderTokenErrorList(panel);
+        updateSelectionMeta(panel);
+    }
+
+    function ensureTokenError(panel, tokenIndex) {
+        const state = panelState[panel];
+        if (!state) return;
+
+        let entry = getTokenError(panel, tokenIndex);
+        if (!entry) {
+            entry = createTokenError(tokenIndex);
+            state.tokenErrors.push(entry);
+            state.tokenErrors.sort(sortTokenErrors);
+            markDirty();
+        }
+
+        setActivePanel(panel);
+        setActiveToken(panel, tokenIndex);
+        syncTokenFields(panel);
+    }
+
+    function removeTokenError(panel, tokenIndex) {
+        const state = panelState[panel];
+        if (!state) return;
+
+        state.tokenErrors = state.tokenErrors.filter((entry) => entry.token_index !== tokenIndex);
+        if (state.activeTokenIndex === tokenIndex) {
+            state.activeTokenIndex = state.tokenErrors.length ? state.tokenErrors[0].token_index : null;
+        }
+        syncTokenFields(panel);
+        renderText(panel);
+        renderTokenErrorList(panel);
+        updateSelectionMeta(panel);
+        markDirty();
+    }
+
+    function clearTokenErrors(panel) {
+        const state = panelState[panel];
+        if (!state) return;
+        state.tokenErrors = [];
+        state.activeTokenIndex = null;
+        syncTokenFields(panel);
+        renderText(panel);
+        renderTokenErrorList(panel);
+        updateSelectionMeta(panel);
+        setActivePanel(panel);
+        markDirty();
+    }
+
+    function syncTokenFields(panel) {
+        const state = panelState[panel];
+        if (!state) return;
+
+        state.tokenErrors.sort(sortTokenErrors);
+        if (state.tokenErrorsInput) {
+            state.tokenErrorsInput.value = JSON.stringify(state.tokenErrors);
+        }
+        if (state.incorrectWordsInput) {
+            state.incorrectWordsInput.value = state.tokenErrors.map((entry) => entry.token).join(', ');
+        }
+    }
+
+    function updateSelectionMeta(panel) {
+        const state = panelState[panel];
+        if (!state) return;
+
+        if (state.selectionMeta) {
+            state.selectionMeta.textContent = `${capitalize(panel)}: ${state.tokenErrors.length} token error(s) marked`;
+        }
+
+        if (state.activeTokenMeta) {
+            if (state.activeTokenIndex === null) {
+                state.activeTokenMeta.textContent = 'No active token selected';
+            } else {
+                const activeToken = getTokenError(panel, state.activeTokenIndex);
+                state.activeTokenMeta.textContent = activeToken
+                    ? `Editing token #${activeToken.token_index + 1}: ${activeToken.token}`
+                    : 'No active token selected';
+            }
+        }
+    }
+
+    function renderText(panel) {
+        const state = panelState[panel];
+        if (!state || !state.container) return;
+
+        state.container.innerHTML = '';
+        words.forEach((word, index) => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'word-token';
+            button.textContent = word;
+
+            if (getTokenError(panel, index)) {
+                button.classList.add('selected');
+            }
+            if (state.activeTokenIndex === index) {
+                button.classList.add('active');
+            }
+
+            button.setAttribute('aria-pressed', getTokenError(panel, index) ? 'true' : 'false');
+            button.setAttribute('aria-label', `${panel} token ${index + 1}: ${word}`);
+            button.addEventListener('click', () => ensureTokenError(panel, index));
+
+            state.container.appendChild(button);
+        });
+    }
+
+    function buildSelectOptions(options, selectedValue, placeholder = '') {
+        const normalized = Array.isArray(options)
+            ? options.map((option) => typeof option === 'string' ? { value: option, label: option } : option)
+            : [];
+        const optionMarkup = normalized.map((option) => `
+            <option value="${escapeHtml(option.value)}" ${option.value === selectedValue ? 'selected' : ''}>${escapeHtml(option.label)}</option>
+        `).join('');
+
+        if (!placeholder) {
+            return optionMarkup;
+        }
+
+        return `
+            <option value="" ${selectedValue ? '' : 'selected'}>${escapeHtml(placeholder)}</option>
+            ${optionMarkup}
+        `;
+    }
+
+    function renderTokenErrorList(panel) {
+        const state = panelState[panel];
+        if (!state || !state.tokenErrorList) return;
+
+        state.tokenErrors.sort(sortTokenErrors);
+
+        if (!state.tokenErrors.length) {
+            state.tokenErrorList.innerHTML = `
+                <div class="token-error-empty">
+                    No token-level errors marked for this panel.
+                </div>
+            `;
+            syncTokenFields(panel);
+            return;
+        }
+
+        state.tokenErrorList.innerHTML = state.tokenErrors.map((entry) => `
+            <div class="token-error-row ${entry.token_index === state.activeTokenIndex ? 'is-active' : ''}" data-token-index="${entry.token_index}">
+                <div class="token-error-row__header">
+                    <div>
+                        <span class="token-badge">#${entry.token_index + 1}</span>
+                        <span class="token-text">${escapeHtml(entry.token)}</span>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-danger" data-remove-token="${entry.token_index}">Remove</button>
+                </div>
+                <div class="row g-2">
+                    <div class="col-md-6">
+                        <label class="form-label form-label-sm">Error Category</label>
+                        <select class="form-select form-select-sm token-error-field" data-field="error_category" data-token-index="${entry.token_index}">
+                            ${buildSelectOptions(ERROR_CATEGORIES, entry.error_category, 'Select category')}
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label form-label-sm">Severity</label>
+                        <select class="form-select form-select-sm token-error-field" data-field="severity" data-token-index="${entry.token_index}">
+                            ${buildSelectOptions(SEVERITY_LEVELS, entry.severity)}
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label form-label-sm">Subsystem Guess</label>
+                        <select class="form-select form-select-sm token-error-field" data-field="subsystem_guess" data-token-index="${entry.token_index}">
+                            ${buildSelectOptions(SUBSYSTEM_GUESSES, entry.subsystem_guess)}
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label form-label-sm">Annotator Confidence</label>
+                        <select class="form-select form-select-sm token-error-field" data-field="annotator_confidence" data-token-index="${entry.token_index}">
+                            ${buildSelectOptions(CONFIDENCE_LEVELS, entry.annotator_confidence)}
+                        </select>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+        state.tokenErrorList.querySelectorAll('.token-error-row').forEach((row) => {
+            row.addEventListener('click', (event) => {
+                if (event.target.closest('select, button, label, option')) {
+                    return;
+                }
+                const tokenIndex = Number(row.dataset.tokenIndex);
+                setActivePanel(panel);
+                setActiveToken(panel, tokenIndex);
+            });
+        });
+
+        state.tokenErrorList.querySelectorAll('.token-error-field').forEach((field) => {
+            field.addEventListener('click', (event) => {
+                event.stopPropagation();
+            });
+            field.addEventListener('change', (event) => {
+                event.stopPropagation();
+                const tokenIndex = Number(event.target.dataset.tokenIndex);
+                const targetField = event.target.dataset.field;
+                const entry = getTokenError(panel, tokenIndex);
+                if (!entry) return;
+                entry[targetField] = event.target.value;
+                syncTokenFields(panel);
+                markDirty();
+            });
+        });
+
+        state.tokenErrorList.querySelectorAll('[data-remove-token]').forEach((button) => {
+            button.addEventListener('click', (event) => {
+                event.stopPropagation();
+                removeTokenError(panel, Number(button.dataset.removeToken));
+            });
+        });
+
+        syncTokenFields(panel);
+    }
 
     function setRadioValue(formId, fieldName, value, shouldMarkDirty = false) {
         const field = document.querySelector(`#${formId} input[name="${fieldName}"][value="${value}"]`);
@@ -521,8 +644,7 @@
     }
 
     function togglePlayPauseForPanel(panel) {
-        const audioId = panel === 'primary' ? 'primaryAudio' : 'peerAudio';
-        const audio = document.getElementById(audioId);
+        const audio = document.getElementById(panel === 'primary' ? 'primaryAudio' : 'peerAudio');
         if (!audio) return;
         if (audio.paused) {
             audio.play();
@@ -541,6 +663,10 @@
         }
     }
 
+    function parseTokenErrorsFromForm(annotationData) {
+        return normalizeTokenErrors(annotationData.TokenErrors);
+    }
+
     function validateForm(annotationData, sheetName) {
         if (!annotationData.Naturalness) {
             alert(`Please select a Naturalness rating for ${sheetName}.`);
@@ -554,56 +680,71 @@
             alert(`Please select a Context rating for ${sheetName}.`);
             return false;
         }
+
+        const tokenErrors = parseTokenErrorsFromForm(annotationData);
+        const missingCategory = tokenErrors.find((entry) => !entry.error_category);
+        if (missingCategory) {
+            alert(`Please choose an error category for token "${missingCategory.token}" in ${sheetName}.`);
+            return false;
+        }
+
         return true;
     }
 
-    hydrateSelectionFromSaved('primary', existingIncorrectPrimary);
-    if (hasPeer) hydrateSelectionFromSaved('peer', existingIncorrectPeer);
-    updateIncorrectWordsInput('primary');
-    updateSelectionMeta('primary');
-    renderText('primary');
-    if (hasPeer) {
-        updateIncorrectWordsInput('peer');
-        updateSelectionMeta('peer');
-        renderText('peer');
-    }
-
-    document.getElementById('primary_clearWordsBtn').addEventListener('click', () => {
-        selectedWordIndexes.primary.clear();
-        updateIncorrectWordsInput('primary');
-        renderText('primary');
-        updateSelectionMeta('primary');
-        setActivePanel('primary');
-        markDirty();
-    });
-
-    const peerClearBtn = document.getElementById('peer_clearWordsBtn');
-    if (peerClearBtn) {
-        peerClearBtn.addEventListener('click', () => {
-            selectedWordIndexes.peer.clear();
-            updateIncorrectWordsInput('peer');
-            renderText('peer');
-            updateSelectionMeta('peer');
-            setActivePanel('peer');
-            markDirty();
-        });
-    }
-
-    panelConfig.primary.card.addEventListener('click', () => setActivePanel('primary'));
-    if (hasPeer && panelConfig.peer.card) panelConfig.peer.card.addEventListener('click', () => setActivePanel('peer'));
-
     function applyDefaultContext(formId, hasExisting) {
-        if (!hasExisting) {
-            if (rawText.includes('?')) {
-                setRadioValue(formId, 'Context', 'No');
-            } else {
-                setRadioValue(formId, 'Context', 'Not Applicable');
-            }
+        if (hasExisting) return;
+        if (rawText.includes('?')) {
+            setRadioValue(formId, 'Context', 'No');
+        } else {
+            setRadioValue(formId, 'Context', 'Not Applicable');
         }
     }
 
+    function fillPerfect(formId) {
+        const form = document.getElementById(formId);
+        const panel = form.dataset.panel;
+
+        form.querySelector(`input[name="Naturalness"][value="Human-like"]`).checked = true;
+        form.querySelector(`input[name="Intelligibility"][value="Yes"]`).checked = true;
+        form.querySelector(`input[name="Context"][value="Not Applicable"]`).checked = true;
+        form.querySelector(`input[name="NumberMistakes"]`).value = '';
+        form.querySelector(`input[name="ConjunctMistakes"]`).value = '';
+        form.querySelector(`textarea[name="Notes"]`).value = '';
+
+        clearTokenErrors(panel);
+        setActivePanel(panel);
+        markDirty();
+    }
+
+    function initializePanel(panel) {
+        const state = panelState[panel];
+        if (!state) return;
+
+        if (state.tokenErrors.length) {
+            state.activeTokenIndex = state.tokenErrors[0].token_index;
+        }
+
+        renderText(panel);
+        renderTokenErrorList(panel);
+        updateSelectionMeta(panel);
+
+        const clearButton = document.getElementById(`${panel}_clearTokenErrorsBtn`);
+        if (clearButton) {
+            clearButton.addEventListener('click', () => clearTokenErrors(panel));
+        }
+
+        if (state.card) {
+            state.card.addEventListener('click', () => setActivePanel(panel));
+        }
+    }
+
+    initializePanel('primary');
+    if (hasPeer) {
+        initializePanel('peer');
+    }
+
     applyDefaultContext('form_primary', hasExistingDataPrimary);
-    if (document.getElementById('form_peer')) {
+    if (hasPeer) {
         applyDefaultContext('form_peer', hasExistingDataPeer);
     }
 
@@ -611,24 +752,7 @@
         setPreference(existingPreference, false);
     }
 
-    function fillPerfect(formId) {
-        const form = document.getElementById(formId);
-        const panel = formId === 'form_primary' ? 'primary' : 'peer';
-        form.querySelector(`input[name="Naturalness"][value="Human-like"]`).checked = true;
-        form.querySelector(`input[name="Intelligibility"][value="Yes"]`).checked = true;
-        form.querySelector(`input[name="Context"][value="Not Applicable"]`).checked = true;
-
-        selectedWordIndexes[panel].clear();
-        updateIncorrectWordsInput(panel);
-        renderText(panel);
-        updateSelectionMeta(panel);
-        setActivePanel(panel);
-
-        form.querySelector(`input[name="NumberMistakes"]`).value = '';
-        form.querySelector(`input[name="ConjunctMistakes"]`).value = '';
-        form.querySelector(`textarea[name="Notes"]`).value = '';
-        markDirty();
-    }
+    setActivePanel('primary');
 
     const formsToWatch = ['form_primary', 'form_peer'];
     formsToWatch.forEach((formId) => {
@@ -638,8 +762,9 @@
         form.addEventListener('change', markDirty);
     });
 
-    const prefInputs = document.querySelectorAll('input[name="preference"]');
-    prefInputs.forEach((input) => input.addEventListener('change', markDirty));
+    document.querySelectorAll('input[name="preference"]').forEach((input) => {
+        input.addEventListener('change', markDirty);
+    });
 
     window.addEventListener('beforeunload', (event) => {
         if (!isDirty) return;
@@ -653,8 +778,6 @@
             activeItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
     };
-
-    setActivePanel('primary');
 
     document.addEventListener('keydown', (event) => {
         const target = event.target;
@@ -686,15 +809,13 @@
         if (hasPeer && event.key.toLowerCase() === 'e') setPreference('Equal');
     });
 
-    document.getElementById('saveAllBtn').addEventListener('click', function (e) {
-        e.preventDefault();
+    document.getElementById('saveAllBtn').addEventListener('click', function (event) {
+        event.preventDefault();
 
         const formsToSubmit = ['form_primary'];
         if (document.getElementById('form_peer')) {
             formsToSubmit.push('form_peer');
         }
-
-        const allAnnotations = [];
 
         let preference = null;
         if (document.getElementById('form_peer')) {
@@ -702,11 +823,12 @@
             if (prefEl) {
                 preference = prefEl.value;
             } else {
-                alert("Please select which version is better (or if they are equal).");
+                alert('Please select which version is better, or mark them equal.');
                 return;
             }
         }
 
+        const allAnnotations = [];
         for (const formId of formsToSubmit) {
             const form = document.getElementById(formId);
             const formData = new FormData(form);
@@ -728,10 +850,10 @@
             });
         }
 
-        const btn = this;
-        const originalText = btn.innerText;
-        btn.disabled = true;
-        btn.innerText = "Saving...";
+        const button = this;
+        const originalText = button.innerText;
+        button.disabled = true;
+        button.innerText = 'Saving...';
 
         fetch('/api/save_multiple', {
             method: 'POST',
@@ -740,11 +862,11 @@
             },
             body: JSON.stringify(allAnnotations),
         })
-            .then(response => response.json())
-            .then(data => {
+            .then((response) => response.json())
+            .then((data) => {
                 if (data.status === 'success') {
                     isDirty = false;
-                    btn.innerText = "Saved!";
+                    button.innerText = 'Saved';
 
                     const activeSidebarItem = document.querySelector('.list-group-item.active');
                     if (activeSidebarItem && !activeSidebarItem.querySelector('.text-success')) {
@@ -755,24 +877,24 @@
                     }
 
                     setTimeout(() => {
-                        const nextBtn = document.getElementById('nextItemBtn');
-                        if (nextBtn) {
-                            window.location.href = nextBtn.href;
+                        const nextButton = document.getElementById('nextItemBtn');
+                        if (nextButton) {
+                            window.location.href = nextButton.href;
                         } else {
-                            btn.disabled = false;
-                            btn.innerText = "Saved (Last Item)";
+                            button.disabled = false;
+                            button.innerText = 'Saved (Last Item)';
                         }
                     }, 300);
                 } else {
                     alert('Error saving: ' + (data.message || 'Unknown error'));
-                    btn.disabled = false;
-                    btn.innerText = originalText;
+                    button.disabled = false;
+                    button.innerText = originalText;
                 }
             })
             .catch(() => {
                 alert('Network error or server issue.');
-                btn.disabled = false;
-                btn.innerText = originalText;
+                button.disabled = false;
+                button.innerText = originalText;
             });
     });
 </script>
