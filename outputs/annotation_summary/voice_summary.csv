@@ -1,0 +1,3 @@
+voice,n_samples,human_like_rate_pct,slightly_robotic,very_robotic,intelligibility_yes_rate_pct,context_success_pct,incorrect_word_rate_pct,number_mistake_rate_pct,conjunct_mistake_rate_pct,notes_rate_pct
+Female,200,78.0,42,2,100.0,55.6,14.0,1.0,0.0,5.5
+Male,200,83.5,31,2,100.0,75.0,13.5,1.0,0.0,5.0

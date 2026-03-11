@@ -1,0 +1,139 @@
+{
+  "n_unique_prompts": 200,
+  "n_voice_specific_evaluations": 400,
+  "naturalness_counts": {
+    "Human-like": 323,
+    "Slightly Robotic": 73,
+    "Very Robotic": 4
+  },
+  "intelligibility_counts": {
+    "Yes": 400
+  },
+  "context_counts": {
+    "Not Applicable": 362,
+    "Yes": 25,
+    "No": 13
+  },
+  "preference_prompt_level": {
+    "Equal": 106,
+    "Female": 55,
+    "Male": 39
+  },
+  "hotspots": {
+    "context_failures": [
+      {
+        "voice": "Male",
+        "item_id": "T-0009",
+        "category": "Phonetics",
+        "target_feature": "Retroflex Rh (ঢ়)"
+      },
+      {
+        "voice": "Male",
+        "item_id": "T-0011",
+        "category": "Phonetics",
+        "target_feature": "Palatal Nasal Nyo (ঞ)"
+      },
+      {
+        "voice": "Male",
+        "item_id": "T-0071",
+        "category": "Prosody",
+        "target_feature": "Hesitation/Stuttering"
+      },
+      {
+        "voice": "Male",
+        "item_id": "T-0120",
+        "category": "Numbers",
+        "target_feature": "Fraction (1.5 textual)"
+      },
+      {
+        "voice": "Male",
+        "item_id": "T-0121",
+        "category": "Code-Mix",
+        "target_feature": "Eng Noun + Verb"
+      },
+      {
+        "voice": "Female",
+        "item_id": "T-0058",
+        "category": "Conjuncts",
+        "target_feature": "J+Ny (Bigyan)"
+      },
+      {
+        "voice": "Female",
+        "item_id": "T-0063",
+        "category": "Prosody",
+        "target_feature": "Negative Question"
+      },
+      {
+        "voice": "Female",
+        "item_id": "T-0064",
+        "category": "Prosody",
+        "target_feature": "Exclamation (Joy)"
+      },
+      {
+        "voice": "Female",
+        "item_id": "T-0066",
+        "category": "Prosody",
+        "target_feature": "Disgust/Reproach"
+      },
+      {
+        "voice": "Female",
+        "item_id": "T-0071",
+        "category": "Prosody",
+        "target_feature": "Hesitation/Stuttering"
+      },
+      {
+        "voice": "Female",
+        "item_id": "T-0082",
+        "category": "Prosody",
+        "target_feature": "Disbelief"
+      },
+      {
+        "voice": "Female",
+        "item_id": "T-0087",
+        "category": "Prosody",
+        "target_feature": "Fear/Suspicion"
+      },
+      {
+        "voice": "Female",
+        "item_id": "T-0121",
+        "category": "Code-Mix",
+        "target_feature": "Eng Noun + Verb"
+      }
+    ],
+    "numeric_failures": [
+      {
+        "voice": "Male",
+        "item_id": "T-0094",
+        "category": "Numbers",
+        "target_feature": "Year (Historical)",
+        "NumberMistakes": "১৯৭১",
+        "Notes": "should've pronounced ১৯৭১ as উনিশশো একাত্তর"
+      },
+      {
+        "voice": "Male",
+        "item_id": "T-0104",
+        "category": "Numbers",
+        "target_feature": "Phone number grouping",
+        "NumberMistakes": "০১৭১১-০০০০০০",
+        "Notes": "to say a phone number\nSingle-digit method: Usually, each digit of a phone number is spoken separately (for example: ০-১-৭ …).\nPairing digits: Sometimes, to speak faster, the last four or six digits are said in pairs (for example: ০০-০০-০০).\nPause: After saying the operator code (such as ০১৭), it is convenient to make a short pause before saying the rest of the number."
+      },
+      {
+        "voice": "Female",
+        "item_id": "T-0094",
+        "category": "Numbers",
+        "target_feature": "Year (Historical)",
+        "NumberMistakes": "১৯৭১",
+        "Notes": "should've pronounced ১৯৭১ as উনিশশো একাত্তর"
+      },
+      {
+        "voice": "Female",
+        "item_id": "T-0104",
+        "category": "Numbers",
+        "target_feature": "Phone number grouping",
+        "NumberMistakes": "০১৭১১-০০০০০০",
+        "Notes": "to say a phone number\nSingle-digit method: Usually, each digit of a phone number is spoken separately (for example: ০-১-৭ …).\nPairing digits: Sometimes, to speak faster, the last four or six digits are said in pairs (for example: ০০-০০-০০).\nPause: After saying the operator code (such as ০১৭), it is convenient to make a short pause before saying the rest of the number."
+      }
+    ],
+    "code_mix_incorrect_word_samples": 38
+  }
+}

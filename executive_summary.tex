@@ -1,0 +1,171 @@
+% ============================================================
+%  TTS Model Evaluation — Executive Summary
+%  Drop this file into your main report with \input{executive_summary}
+%  Requires: booktabs, xcolor, geometry, hyperref, array, multirow
+% ============================================================
+
+\documentclass[12pt, a4paper]{article}
+
+% --- Packages ---
+\usepackage[a4paper, margin=2.5cm]{geometry}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{parskip}
+\usepackage{titlesec}
+\usepackage{lmodern}
+\usepackage[T1]{fontenc}
+\usepackage{microtype}
+
+% --- Colours ---
+\definecolor{pareto-blue}{RGB}{30, 80, 160}
+\definecolor{status-pass}{RGB}{0, 140, 70}
+\definecolor{status-warn}{RGB}{210, 120, 0}
+\definecolor{status-fail}{RGB}{190, 30, 30}
+\definecolor{light-gray}{RGB}{245, 245, 245}
+\definecolor{mid-gray}{RGB}{100, 100, 100}
+
+% --- Section styling ---
+\titleformat{\section}{\large\bfseries\color{pareto-blue}}{}{0em}{}[\titlerule]
+\titleformat{\subsection}{\normalsize\bfseries}{}{0em}{}
+
+% --- Custom column type for the status table ---
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
+
+% --- Status badge command ---
+\newcommand{\pass}[0]{\textcolor{status-pass}{\textbf{PASS}}}
+\newcommand{\conditional}[0]{\textcolor{status-warn}{\textbf{CONDITIONAL}}}
+\newcommand{\fail}[0]{\textcolor{status-fail}{\textbf{FAIL}}}
+\newcommand{\risk}[1]{\textcolor{status-fail}{\textbf{#1}}}
+\newcommand{\caution}[1]{\textcolor{status-warn}{\textbf{#1}}}
+
+% ============================================================
+\begin{document}
+
+% --- Header ---
+\begin{center}
+  {\LARGE \textbf{Text-to-Speech (TTS) Model Evaluation}}\\[0.4em]
+  {\large \textbf{Executive Summary}}\\[0.3em]
+  {\color{mid-gray}\small Evaluation Period: Q1 2026 \quad|\quad Language: Bangla \quad|\quad Status: \caution{Conditionally Ready}}\\[0.3em]
+  \hrule
+\end{center}
+
+\vspace{0.8em}
+
+% ============================================================
+\section{Purpose and Scope}
+
+This document summarises the findings of an independent evaluation of the Bangla Text-to-Speech (TTS) system conducted by the AI Quality Assurance team at Pareto. The evaluation assessed four interdependent components:
+
+\begin{enumerate}[label=\textbf{\arabic*.}, leftmargin=2em, itemsep=0.2em]
+  \item \textbf{Gold Standard Dataset} — Acoustic quality, file completeness, and audio-text alignment of the 4,636-file training and evaluation corpus.
+  \item \textbf{Core TTS System} — Naturalness, intelligibility, and phonetic accuracy of synthesised speech across four voices.
+  \item \textbf{Phonetic Verification Framework} — Validity of the round-trip (TTS $\rightarrow$ ASR) methodology for detecting phoneme-level errors.
+  \item \textbf{API Infrastructure} — Endpoint reliability, response latency, and voice consistency under standard and burst load conditions.
+\end{enumerate}
+
+The evaluation draws on Mean Opinion Score (MOS) testing, phoneme error rate analysis, acoustic spectral analysis, statistical hypothesis testing (Mann-Whitney U), and direct API instrumentation.
+
+% ============================================================
+\section{Key Findings at a Glance}
+
+\vspace{0.4em}
+\begin{center}
+\renewcommand{\arraystretch}{1.45}
+\begin{tabular}{L{3.8cm} L{6.5cm} C{2.2cm}}
+  \toprule
+  \textbf{Component} & \textbf{Summary Finding} & \textbf{Status} \\
+  \midrule
+  Gold Standard Dataset
+    & 100\% file completeness achieved. Audio-text alignment and acoustic quality issues identified in a subset of files; corpus does not yet fully meet gold-standard criteria.
+    & \conditional \\
+  \addlinespace
+  Core TTS System
+    & Intelligibility MOS of 4.9/5. Naturalness scores strong across voices. Schwa deletion behaviour identified as linguistically natural rather than a model defect.
+    & \pass \\
+  \addlinespace
+  Phonetic Verification Framework
+    & Round-trip verification pipeline operational; numeric text normalisation gap identified as a systematic blind spot in current coverage.
+    & \conditional \\
+  \addlinespace
+  API Infrastructure
+    & Endpoint validation passed. \risk{Multi-minute round-trip latency} recorded under current conditions — a critical risk for production readiness.
+    & \fail \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\vspace{0.6em}
+
+% ============================================================
+\section{Critical Risks}
+
+The following issues require resolution before the system can be considered production-ready:
+
+\begin{enumerate}[label=\textbf{R\arabic*.}, leftmargin=2.5em, itemsep=0.4em]
+
+  \item \textbf{\risk{API Response Latency — Severity: Critical}} \\
+  Round-trip response times measured in the multi-minute range under current infrastructure configurations. For any real-time or near-real-time use case (educational assistants, voice interfaces, conversational agents), this renders the system non-deployable in its present state. A target SLO must be defined and engineering remediation scoped immediately.
+
+  \item \textbf{\caution{Numeric Text Normalisation — Severity: High}} \\
+  The phonetic verification framework and TTS synthesis pipeline both exhibit systematic failures on numeric expressions (cardinal numbers, ordinals, dates, currency). This gap is cross-cutting and will affect downstream quality in any text domain containing numerals. A dedicated normalisation module is required.
+
+  \item \textbf{\caution{Dataset Gold-Standard Classification — Severity: Medium}} \\
+  The corpus is labelled ``Gold Standard'' throughout documentation but does not yet fully satisfy the criteria used to justify that designation. Audio-text misalignments and quality failures in a subset of files should be remediated, or the dataset should be reclassified and the gap formally documented.
+
+  \item \textbf{\caution{Word-Duration Mismatches — Severity: Medium}} \\
+  A subset of synthesised audio files exhibit word-duration mismatches relative to reference transcriptions. The absolute count and affected percentage have not yet been quantified; this must be determined before final delivery.
+
+\end{enumerate}
+
+% ============================================================
+\section{Component Highlights}
+
+\subsection{Gold Standard Dataset}
+The corpus of 4,636 audio files achieved complete file presence (0 missing files). Folder-level Gini coefficient analysis revealed distributional variation in duration and acoustic energy across the \texttt{create} and \texttt{collect} subsets. Acoustic quality checks identified outlier files requiring remediation before the dataset can support reliable model training and evaluation benchmarking.
+
+\subsection{TTS System Performance}
+Mean Opinion Score testing returned an intelligibility score of \textbf{4.9 out of 5.0}, placing the system in the high-quality band. Naturalness scores were strong across all four voices (\texttt{male\_spk0}, \texttt{male\_spk1}, \texttt{female\_spk0}, \texttt{female\_spk1}), with statistically significant inter-voice differences confirmed via Mann-Whitney U testing. Schwa deletion patterns, initially flagged as potential acoustic defects, were determined through linguistic analysis to reflect natural Bangla phonological processes rather than model failures.
+
+\subsection{Phonetic Verification Framework}
+The round-trip TTS$\rightarrow$ASR verification pipeline is a methodological contribution of this evaluation. The framework successfully isolates phoneme-level errors in synthesised output. Its primary limitation — that errors shared between the TTS and ASR systems will not be surfaced — is noted for subsequent evaluation cycles. Numeric normalisation coverage represents the largest current gap in the framework's detection capability.
+
+\subsection{API Infrastructure}
+Endpoint availability and structural validation passed. Burst-mode behaviour under load was not captured within the configured test window, indicating that capacity planning for concurrent request scenarios remains an open item. Latency remediation is the single most urgent engineering priority identified in this evaluation.
+
+% ============================================================
+\section{Recommendations and Next Steps}
+
+\begin{enumerate}[label=\textbf{\arabic*.}, leftmargin=2em, itemsep=0.3em]
+  \item \textbf{Define an API latency SLO} and scope an engineering sprint to diagnose and reduce round-trip response times to within the target bound before any production deployment.
+  \item \textbf{Develop a Bangla numeric normalisation module} covering cardinals, ordinals, dates, times, and currency; integrate into both the TTS pre-processing pipeline and the phonetic verification framework.
+  \item \textbf{Quantify word-duration mismatches} — run a full batch count, determine root cause (silence padding, prosody model, boundary detection), and establish a remediation plan.
+  \item \textbf{Remediate or reclassify the dataset} — either correct the audio-text alignment failures and re-run quality checks, or formally document the delta between current state and gold-standard criteria.
+  \item \textbf{Expand MOS evaluation documentation} — record annotator count, native-speaker composition, inter-annotator agreement metric, and test-set sentence list to make intelligibility and naturalness claims independently verifiable.
+  \item \textbf{Re-run burst-mode API testing} with an extended observation window and document maximum sustainable concurrent request throughput.
+\end{enumerate}
+
+% ============================================================
+\section{Overall Assessment}
+
+\begin{center}
+\colorbox{light-gray}{%
+  \begin{minipage}{0.88\textwidth}
+    \vspace{0.6em}
+    \centering
+    {\large \caution{System Status: Conditionally Ready for Continued Development}}\\[0.5em]
+    \raggedright
+    The Bangla TTS system demonstrates strong core synthesis quality, with near-ceiling intelligibility scores and linguistically coherent phonological behaviour. However, critical gaps in API infrastructure latency, numeric text handling, and dataset integrity prevent an unconditional readiness designation at this evaluation milestone. Advancement to production deployment is contingent on resolution of the Critical and High severity risks identified above (R1 and R2 at minimum). The Phonetic Verification Framework represents a reusable evaluation asset that should be maintained and expanded for future model iterations.
+    \vspace{0.6em}
+  \end{minipage}%
+}
+\end{center}
+
+\vspace{1.5em}
+\noindent\textcolor{mid-gray}{\small This executive summary is an extract of the full \textit{TTS Model Evaluation Report}. For detailed methodology, tabulated results, and statistical appendices, refer to the complete report.}
+
+\end{document}

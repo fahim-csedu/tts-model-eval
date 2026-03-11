@@ -1,0 +1,204 @@
+﻿ID,Naturalness,Intelligibility,Context,IncorrectWords,NumberMistakes,ConjunctMistakes,Notes,Preference
+T-0001,Human-like,Yes,Not Applicable,,,,,Female
+T-0002,Human-like,Yes,Not Applicable,,,,,Equal
+T-0003,Human-like,Yes,Not Applicable,,,,,Equal
+T-0004,Slightly Robotic,Yes,Not Applicable,ধোয়ে।,,,"""ধোয়"" was pronounced incorrectly",Male
+T-0005,Slightly Robotic,Yes,Not Applicable,,,,,Male
+T-0006,Slightly Robotic,Yes,Not Applicable,,,,,Male
+T-0007,Slightly Robotic,Yes,Not Applicable,,,,,Female
+T-0008,Human-like,Yes,Not Applicable,,,,,Equal
+T-0009,Human-like,Yes,Yes,,,,,Female
+T-0010,Human-like,Yes,Not Applicable,,,,,Female
+T-0011,Human-like,Yes,Not Applicable,,,,,Female
+T-0012,Human-like,Yes,Not Applicable,,,,,Equal
+T-0013,Human-like,Yes,Not Applicable,,,,,Equal
+T-0014,Slightly Robotic,Yes,Not Applicable,,,,"could've used intonation in ""খুব ভালো""",Male
+T-0015,Human-like,Yes,Not Applicable,,,,,Equal
+T-0016,Human-like,Yes,Not Applicable,,,,,Male
+T-0017,Slightly Robotic,Yes,Not Applicable,,,,,Equal
+T-0018,Human-like,Yes,Not Applicable,,,,,Equal
+T-0019,Human-like,Yes,Not Applicable,,,,,Equal
+T-0020,Slightly Robotic,Yes,Not Applicable,,,,,Equal
+T-0021,Slightly Robotic,Yes,Not Applicable,,,,,Equal
+T-0022,Slightly Robotic,Yes,Not Applicable,,,,,Equal
+T-0023,Human-like,Yes,Not Applicable,,,,,Female
+T-0024,Slightly Robotic,Yes,Not Applicable,,,,,Male
+T-0025,Human-like,Yes,Not Applicable,,,,,Equal
+T-0026,Human-like,Yes,Not Applicable,,,,,Equal
+T-0027,Human-like,Yes,Not Applicable,,,,,Equal
+T-0028,Slightly Robotic,Yes,Not Applicable,,,,,Male
+T-0029,Slightly Robotic,Yes,Not Applicable,"করোনা,",,,,Male
+T-0030,Slightly Robotic,Yes,Not Applicable,,,,,Male
+T-0031,Human-like,Yes,Not Applicable,,,,,Equal
+T-0032,Human-like,Yes,Not Applicable,,,,,Equal
+T-0033,Human-like,Yes,Not Applicable,,,,,Equal
+T-0034,Human-like,Yes,Not Applicable,,,,,Equal
+T-0035,Human-like,Yes,Not Applicable,,,,,Equal
+T-0036,Human-like,Yes,Not Applicable,,,,,Equal
+T-0037,Human-like,Yes,Not Applicable,,,,,Equal
+T-0038,Human-like,Yes,Not Applicable,,,,,Equal
+T-0039,Slightly Robotic,Yes,Not Applicable,,,," Didn't use the punctuation "","" right",Male
+T-0040,Slightly Robotic,Yes,Not Applicable,,,,,Male
+T-0041,Human-like,Yes,Not Applicable,,,,,Equal
+T-0042,Human-like,Yes,Not Applicable,,,,,Equal
+T-0043,Human-like,Yes,Not Applicable,,,,,Female
+T-0044,Human-like,Yes,Not Applicable,,,,,Female
+T-0045,Human-like,Yes,Not Applicable,,,,,Female
+T-0046,Human-like,Yes,Not Applicable,,,,,Equal
+T-0047,Human-like,Yes,Not Applicable,,,,,Equal
+T-0048,Human-like,Yes,Not Applicable,,,,,Equal
+T-0049,Slightly Robotic,Yes,Not Applicable,,,,,Male
+T-0050,Human-like,Yes,Not Applicable,,,,,Equal
+T-0051,Slightly Robotic,Yes,Not Applicable,,,,,Equal
+T-0052,Human-like,Yes,Not Applicable,,,,,Female
+T-0053,Human-like,Yes,Not Applicable,,,,,Equal
+T-0054,Human-like,Yes,Not Applicable,,,,,Equal
+T-0055,Human-like,Yes,Not Applicable,,,,,Equal
+T-0056,Human-like,Yes,Not Applicable,,,,,Equal
+T-0057,Human-like,Yes,Not Applicable,,,,,Female
+T-0058,Very Robotic,Yes,No,,,,No use of intonation .,Male
+T-0059,Human-like,Yes,Not Applicable,,,,,Female
+T-0060,Human-like,Yes,Not Applicable,,,,,Equal
+T-0061,Human-like,Yes,Yes,,,,,Male
+T-0062,Human-like,Yes,Yes,,,,,Equal
+T-0063,Slightly Robotic,Yes,No,,,,No use of intonation,Male
+T-0064,Human-like,Yes,No,,,,,Male
+T-0065,Slightly Robotic,Yes,Yes,,,,use of intonation should've been more intense,Male
+T-0066,Slightly Robotic,Yes,No,,,, ,Male
+T-0067,Human-like,Yes,Yes,,,,,Male
+T-0068,Human-like,Yes,Yes,,,,,Equal
+T-0069,Human-like,Yes,Not Applicable,,,,,Male
+T-0070,Slightly Robotic,Yes,Not Applicable,,,,,Equal
+T-0071,Very Robotic,Yes,No,,,,,Equal
+T-0072,Slightly Robotic,Yes,Not Applicable,"হুম,",,,,Equal
+T-0073,Slightly Robotic,Yes,Not Applicable,,,,,Male
+T-0074,Human-like,Yes,Not Applicable,,,,,Female
+T-0075,Slightly Robotic,Yes,Not Applicable,,,,,Male
+T-0076,Human-like,Yes,Not Applicable,,,,,Female
+T-0077,Slightly Robotic,Yes,Not Applicable,,,,,Male
+T-0078,Human-like,Yes,Yes,,,,,Female
+T-0079,Slightly Robotic,Yes,Not Applicable,,,,,Male
+T-0080,Slightly Robotic,Yes,Yes,,,,,Male
+T-0081,Human-like,Yes,Not Applicable,,,,,Female
+T-0082,Slightly Robotic,Yes,No,,,,Not proper use of intonation .,Male
+T-0083,Slightly Robotic,Yes,Not Applicable,,,,"""জ"" isn't pronounced right.",Female
+T-0084,Slightly Robotic,Yes,Not Applicable,,,,,Male
+T-0085,Slightly Robotic,Yes,Not Applicable,,,,,Male
+T-0086,Human-like,Yes,Not Applicable,,,,,Female
+T-0087,Slightly Robotic,Yes,No,,,,No use of intonation,Male
+T-0088,Slightly Robotic,Yes,Not Applicable,,,,,Female
+T-0089,Human-like,Yes,Not Applicable,,,,,Female
+T-0090,Slightly Robotic,Yes,Not Applicable,,,,,Equal
+T-0091,Human-like,Yes,Not Applicable,,,,,Male
+T-0092,Human-like,Yes,Not Applicable,,,,,Female
+T-0093,Slightly Robotic,Yes,Not Applicable,,,,,Male
+T-0094,Slightly Robotic,Yes,Not Applicable,১৯৭১,১৯৭১,,should've pronounced ১৯৭১ as উনিশশো একাত্তর,Equal
+T-0095,Slightly Robotic,Yes,Not Applicable,,,,,Female
+T-0096,Slightly Robotic,Yes,Not Applicable,বাস,,,,Equal
+T-0097,Slightly Robotic,Yes,Not Applicable,,,,,Female
+T-0098,Human-like,Yes,Not Applicable,,,,,Female
+T-0099,Human-like,Yes,Not Applicable,,,,,Female
+T-0100,Human-like,Yes,Not Applicable,,,,,Female
+T-0101,Human-like,Yes,Not Applicable,,,,,Female
+T-0102,Human-like,Yes,Not Applicable,,,,,Equal
+T-0103,Human-like,Yes,Not Applicable,,,,,Male
+T-0104,Human-like,Yes,Not Applicable,০১৭১১-০০০০০০,০১৭১১-০০০০০০,,"to say a phone number
+Single-digit method: Usually, each digit of a phone number is spoken separately (for example: ০-১-৭ …).
+Pairing digits: Sometimes, to speak faster, the last four or six digits are said in pairs (for example: ০০-০০-০০).
+Pause: After saying the operator code (such as ০১৭), it is convenient to make a short pause before saying the rest of the number.",Equal
+T-0105,Human-like,Yes,Not Applicable,,,,,Female
+T-0106,Human-like,Yes,Not Applicable,info@example.com,,,,Equal
+T-0107,Human-like,Yes,Not Applicable,www.google.com,,,,Equal
+T-0108,Human-like,Yes,Not Applicable,,,,,Equal
+T-0109,Human-like,Yes,Not Applicable,,,,,Equal
+T-0110,Human-like,Yes,Not Applicable,,,,,Female
+T-0111,Human-like,Yes,Not Applicable,,,,,Female
+T-0112,Human-like,Yes,Not Applicable,,,,,Female
+T-0113,Human-like,Yes,Yes,,,,,Female
+T-0114,Human-like,Yes,Not Applicable,,,,,Female
+T-0115,Human-like,Yes,Not Applicable,,,,,Equal
+T-0116,Human-like,Yes,Not Applicable,,,,,Equal
+T-0117,Human-like,Yes,Not Applicable,,,,,Equal
+T-0118,Human-like,Yes,Not Applicable,,,,,Equal
+T-0119,Human-like,Yes,Not Applicable,,,,,Equal
+T-0120,Human-like,Yes,Not Applicable,,,,,Female
+T-0121,Slightly Robotic,Yes,No,"Meeting-টা, cancel",,,,Equal
+T-0122,Human-like,Yes,Not Applicable,"File-টা, send",,,,Female
+T-0123,Human-like,Yes,Not Applicable,"Internet, slow",,,,Equal
+T-0124,Slightly Robotic,Yes,Not Applicable,"Weather-টা, nice।",,,,Equal
+T-0125,Slightly Robotic,Yes,Not Applicable,"Train-টা, miss",,,,Equal
+T-0126,Human-like,Yes,Not Applicable,Smile-টা,,,,Female
+T-0127,Human-like,Yes,Not Applicable,"Office-এ, pressure",,,,Equal
+T-0128,Human-like,Yes,Not Applicable,"Laptop-টা, charge-এ",,,,Equal
+T-0129,Human-like,Yes,Not Applicable,"Online, class",,,,Equal
+T-0130,Human-like,Yes,Not Applicable,Password,,,,Equal
+T-0131,Human-like,Yes,Not Applicable,"Video-টা, viral",,,,Equal
+T-0132,Human-like,Yes,Not Applicable,"Status, update",,,,Equal
+T-0133,Human-like,Yes,Not Applicable,"Bus-এর, wait",,,,Equal
+T-0134,Human-like,Yes,Not Applicable,Shopping,,,,Equal
+T-0135,Human-like,Yes,Not Applicable,Doctor,,,,Female
+T-0136,Human-like,Yes,Not Applicable,Ticket,,,,Female
+T-0137,Human-like,Yes,Not Applicable,"Project, submit",,,,Equal
+T-0138,Human-like,Yes,Not Applicable,"Result, publish",,,,Equal
+T-0139,Human-like,Yes,Not Applicable,"Mobile-টা, silent",,,,Equal
+T-0140,Human-like,Yes,Not Applicable,,,,,Female
+T-0141,Human-like,Yes,Not Applicable,,,,,Equal
+T-0142,Human-like,Yes,Not Applicable,,,,,Male
+T-0143,Human-like,Yes,Not Applicable,,,,,Equal
+T-0144,Human-like,Yes,Not Applicable,,,,,Equal
+T-0145,Human-like,Yes,Not Applicable,,,,,Female
+T-0146,Human-like,Yes,Not Applicable,,,,,Female
+T-0147,Human-like,Yes,Not Applicable,,,,,Equal
+T-0148,Human-like,Yes,Not Applicable,,,,,Equal
+T-0149,Human-like,Yes,Not Applicable,,,,,Female
+T-0150,Human-like,Yes,Not Applicable,,,,,Equal
+T-0151,Human-like,Yes,Not Applicable,,,,,Female
+T-0152,Human-like,Yes,Not Applicable,,,,,Equal
+T-0153,Human-like,Yes,Not Applicable,,,,,Equal
+T-0154,Human-like,Yes,Not Applicable,,,,,Equal
+T-0155,Human-like,Yes,Not Applicable,,,,,Equal
+T-0156,Human-like,Yes,Not Applicable,,,,,Equal
+T-0157,Human-like,Yes,Not Applicable,,,,,Equal
+T-0158,Human-like,Yes,Not Applicable,,,,,Equal
+T-0159,Human-like,Yes,Not Applicable,,,,,Equal
+T-0160,Human-like,Yes,Not Applicable,,,,,Equal
+T-0161,Human-like,Yes,Not Applicable,,,,,Equal
+T-0162,Human-like,Yes,Not Applicable,,,,,Equal
+T-0163,Human-like,Yes,Not Applicable,,,,,Female
+T-0164,Human-like,Yes,Not Applicable,,,,,Equal
+T-0165,Human-like,Yes,Not Applicable,,,,,Male
+T-0166,Human-like,Yes,Not Applicable,,,,,Female
+T-0167,Human-like,Yes,Not Applicable,,,,,Equal
+T-0168,Human-like,Yes,Not Applicable,,,,,Equal
+T-0169,Human-like,Yes,Not Applicable,,,,,Male
+T-0170,Human-like,Yes,Not Applicable,,,,,Equal
+T-0171,Human-like,Yes,Not Applicable,,,,,Equal
+T-0172,Human-like,Yes,Not Applicable,,,,,Equal
+T-0173,Human-like,Yes,Not Applicable,,,,,Female
+T-0174,Human-like,Yes,Not Applicable,,,,,Equal
+T-0175,Human-like,Yes,Not Applicable,,,,,Equal
+T-0176,Human-like,Yes,Not Applicable,,,,,Male
+T-0177,Human-like,Yes,Not Applicable,,,,,Equal
+T-0178,Human-like,Yes,Not Applicable,"করে,",,,,Equal
+T-0179,Human-like,Yes,Not Applicable,,,,,Female
+T-0180,Human-like,Yes,Not Applicable,,,,,Equal
+T-0181,Human-like,Yes,Not Applicable,,,,,Female
+T-0182,Human-like,Yes,Not Applicable,,,,,Female
+T-0183,Human-like,Yes,Not Applicable,,,,,Female
+T-0184,Human-like,Yes,Not Applicable,,,,,Equal
+T-0185,Human-like,Yes,Not Applicable,,,,,Female
+T-0186,Human-like,Yes,Not Applicable,,,,,Male
+T-0187,Human-like,Yes,Not Applicable,,,,,Female
+T-0188,Human-like,Yes,Not Applicable,,,,,Equal
+T-0189,Human-like,Yes,Not Applicable,,,,,Equal
+T-0190,Human-like,Yes,Not Applicable,,,,,Male
+T-0191,Human-like,Yes,Not Applicable,,,,,Female
+T-0192,Human-like,Yes,Not Applicable,,,,,Equal
+T-0193,Human-like,Yes,Not Applicable,,,,,Equal
+T-0194,Human-like,Yes,Yes,,,,,Equal
+T-0195,Human-like,Yes,Not Applicable,,,,,Equal
+T-0196,Human-like,Yes,Not Applicable,,,,,Female
+T-0197,Human-like,Yes,Not Applicable,,,,,Equal
+T-0198,Human-like,Yes,Not Applicable,,,,,Male
+T-0199,Human-like,Yes,Not Applicable,,,,,Equal
+T-0200,Human-like,Yes,Not Applicable,,,,,Female

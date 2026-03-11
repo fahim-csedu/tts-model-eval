@@ -1,0 +1,309 @@
+\chapter{Core System}
+\label{ch:system}
+
+Recent advances in deep learning have significantly improved the performance of neural text-to-speech (TTS) systems. Modern architectures typically follow a pipeline design in which textual input is first converted into an intermediate acoustic representation using sequence-to-sequence (seq2seq) models, and the resulting acoustic features are subsequently transformed into waveform audio through neural vocoders \cite{shen2018natural, van2016wavenet}. More recent approaches integrate these stages into unified end-to-end architectures capable of directly generating speech from text \cite{mehrish2023review}.
+
+Despite these architectural advances, evaluating the quality of synthesized speech remains challenging. Speech quality is inherently multi-dimensional and cannot be adequately captured by a single metric. Traditional loss-based evaluation measures often fail to reflect perceptual attributes such as intelligibility, naturalness, and prosody. A system may achieve low reconstruction error while still producing speech that sounds unnatural or omits important elements of the input text.
+
+For this reason, evaluation of TTS systems typically considers two fundamental dimensions:
+
+\begin{itemize}
+\item \textbf{Intelligibility}, which measures whether listeners can correctly understand the words being spoken.
+\item \textbf{Naturalness}, which describes how closely synthesized speech resembles human speech in terms of rhythm, pitch variation, emphasis, and fluency.
+\end{itemize}
+
+Traditionally, these attributes are assessed using subjective listening experiments such as the Mean Opinion Score (MOS), where human listeners rate audio samples on a five-point scale \cite{dall2014rating}. Although MOS remains widely used, large-scale subjective evaluation is expensive and time-consuming. As a result, modern evaluation frameworks often combine structured objective analysis with perceptual assessment.
+
+This chapter presents a structured evaluation of the Bangla Text-to-Speech system designed for general-purpose use. The system exposes two synthesized speakers, male and female, and is evaluated independently without comparison to an external baseline model.
+
+The evaluation focuses on four primary dimensions:
+
+\begin{enumerate}
+\item Linguistic Correctness
+\item Human-Likeness
+\item User Satisfaction
+\item Task Performance
+\end{enumerate}
+
+Separating these dimensions enables a more diagnostic understanding of the system's strengths and limitations.
+
+\section{Executive Summary}
+
+This chapter reports the perceptual and diagnostic evaluation of the Bangla TTS core system using the completed manual annotations collected for the synthesized outputs. The analysis covers 200 unique prompts evaluated across both available voices, yielding 400 voice-specific judgments. The prompt set was deliberately diversified across phonetics, conjuncts, prosody, numbers, code-mixing, named entities, long-form reading, and stress-oriented inputs in order to capture a broad range of deployment-relevant behavior.
+
+The evaluation indicates that the system is \textbf{highly intelligible but not uniformly natural}. Intelligibility was judged successful in all 400 evaluations, implying that listeners could understand the spoken content at the sentence level in every annotated sample. Naturalness was rated \textit{Human-like} in 323 of the 400 evaluations (80.8\%), while 73 samples (18.3\%) were rated \textit{Slightly Robotic} and 4 samples (1.0\%) were rated \textit{Very Robotic}. This profile suggests that the model's acoustic engine is functionally strong, but perceptual realism still degrades in linguistically sensitive conditions.
+
+The most severe weakness identified by the annotations is \textbf{code-mixed language handling}. Among the 40 voice-specific code-mix evaluations, 38 (95.0\%) contained explicit incorrect-word markings. In practice, this means that embedded English tokens were often skipped, truncated, or rendered unnaturally within otherwise Bangla sentences. The second major weakness is \textbf{context-sensitive prosody}. Context was marked applicable in 38 evaluations, and only 25 of those were judged contextually correct, yielding a context-success rate of 65.8\%. This pattern aligns with the dedicated prosody prompt set, where 27 out of 60 evaluations (45.0\%) were judged slightly or very robotic.
+
+Numeric and symbol normalization errors were less frequent in absolute count but remain operationally important. Only 4 of the 60 number-focused evaluations contained explicit number mistakes; however, these involved categories such as year verbalization and phone-number reading, which are common in real-world usage. Conjunct-heavy prompts were not a catastrophic failure mode, but they showed measurable perceptual fragility, with 10 of 60 conjunct-focused evaluations (16.7\%) judged non-human-like.
+
+At the voice level, both speakers perform competitively. The male voice achieved a slightly higher human-like rate (83.5\% versus 78.0\%) and a higher context-success rate on applicable prompts (75.0\% versus 55.6\%). However, prompt-level preference remained balanced overall: 106 of 200 prompts (53.0\%) were marked \textit{Equal}, 55 prompts (27.5\%) favored the female voice, and 39 prompts (19.5\%) favored the male voice. This indicates that while one voice may outperform the other on specific prompt families, the two are broadly comparable in aggregate quality.
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{l c}
+\toprule
+Metric & Value \\
+\midrule
+Unique prompts & 200 \\
+Voice-specific evaluations & 400 \\
+Sentence-level intelligibility success & 400 / 400 (100.0\%) \\
+Human-like naturalness & 323 / 400 (80.8\%) \\
+Slightly or very robotic outputs & 77 / 400 (19.3\%) \\
+Context applicable & 38 / 400 (9.5\%) \\
+Contextually correct (when applicable) & 25 / 38 (65.8\%) \\
+Prompts with equal voice preference & 106 / 200 (53.0\%) \\
+Prompts preferring female voice & 55 / 200 (27.5\%) \\
+Prompts preferring male voice & 39 / 200 (19.5\%) \\
+\bottomrule
+\end{tabular}
+\caption{High-level summary of the Chapter 3 core-system evaluation}
+\label{tab:core_system_summary}
+\end{table}
+
+\section{Evaluation Objectives}
+
+The evaluation is designed to examine the system's performance across several dimensions relevant to practical deployment.
+
+The primary objectives are:
+
+\begin{itemize}
+\item \textbf{Quantifying pronunciation accuracy} at the word and phoneme levels in order to determine whether Bangla phonological structures are rendered correctly.
+\item \textbf{Identifying systematic phonological weaknesses}, including possible issues with conjunct consonants or phoneme distinctions.
+\item \textbf{Measuring perceptual naturalness}, particularly in terms of prosody, rhythm, and sentence-level delivery.
+\item \textbf{Assessing user experience}, including perceived clarity and listening comfort.
+\item \textbf{Evaluating functional intelligibility} through listening tasks that measure how effectively users can extract information from synthesized speech.
+\item \textbf{Comparing consistency across speakers} to determine whether the two available voices maintain similar quality levels.
+\end{itemize}
+
+\section{Evaluation Structure Overview}
+
+To capture multiple dimensions of speech quality, the evaluation framework is organized into four layers.
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{l l l c}
+\toprule
+Layer & Focus & Measurement Type & Weight \\
+\midrule
+Layer 1 & Linguistic Correctness & Objective + Tagged & 55\% \\
+Layer 2 & Human-Likeness & Perceptual Evaluation & 20\% \\
+Layer 3 & User Satisfaction & Listener Feedback & 15\% \\
+Layer 4 & Task Performance & Behavioral Tasks & 10\% \\
+\bottomrule
+\end{tabular}
+\caption{Evaluation layer structure}
+\label{tab:core_system_layers}
+\end{table}
+
+The framework prioritizes linguistic correctness because incorrect pronunciation directly reduces intelligibility. Higher layers progressively evaluate perceptual realism and practical usability. The current annotation protocol is strongest at sentence-level perceptual judgment and diagnostic error spotting; accordingly, the discussion below emphasizes those measurements while preserving the four-layer conceptual framework.
+
+\section{Evaluation Methodology}
+
+To complement the qualitative observations gathered during listening review, we conducted a structured manual evaluation using the completed annotation sheets associated with the model outputs. Each of the 200 prompts was evaluated for both synthesized voices, generating 400 voice-specific records. The prompts were distributed across eight categories chosen to stress distinct aspects of Bangla TTS behavior: phonetics, conjuncts, prosody, numbers, code-mix, named entities, long-form reading, and stress-oriented prompts.
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{l c c}
+\toprule
+Prompt Category & Unique Prompts & Voice-Specific Evaluations \\
+\midrule
+Phonetics & 30 & 60 \\
+Conjuncts & 30 & 60 \\
+Prosody & 30 & 60 \\
+Numbers & 30 & 60 \\
+Code-Mix & 20 & 40 \\
+Named\_Entity & 20 & 40 \\
+Long\_Form & 20 & 40 \\
+Stress\_Test & 20 & 40 \\
+\bottomrule
+\end{tabular}
+\caption{Prompt-set composition used for Chapter 3 manual evaluation}
+\label{tab:core_system_prompt_profile}
+\end{table}
+
+The annotation protocol records the following judgments for each sample: naturalness, intelligibility, contextual appropriateness, incorrect words, number mistakes, conjunct mistakes, free-text notes, and cross-voice preference. Because the annotation instrument operates at the sentence level rather than at the token-by-token or phoneme-by-phoneme level, the resulting analysis is designed as a \textit{structured perceptual audit} rather than a full phonological confusion-matrix study. This distinction is important: the current evidence is strong enough to support formal claims about intelligibility, naturalness, category-wise weakness patterns, and voice comparison, but not to report exact word accuracy or full phoneme error distributions.
+
+\section{Quantitative Summary of Manual Evaluation}
+
+The manual evaluation results reveal a strong asymmetry between \textit{understandability} and \textit{human-likeness}. From an intelligibility standpoint, the system performs exceptionally well: all 400 annotated outputs were judged understandable. From a perceptual standpoint, however, naturalness varies materially by input condition.
+
+At the voice level, the male voice obtained a slightly stronger naturalness profile and fewer robotic judgments, although the overall gap between the two voices remains moderate.
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{l c c c c c}
+\toprule
+Voice & Samples & Human-like & Slightly Robotic & Very Robotic & Context Success$^\dagger$ \\
+\midrule
+Female & 200 & 156 (78.0\%) & 42 (21.0\%) & 2 (1.0\%) & 55.6\% \\
+Male & 200 & 167 (83.5\%) & 31 (15.5\%) & 2 (1.0\%) & 75.0\% \\
+\bottomrule
+\end{tabular}
+\caption{Voice-level summary of perceptual evaluation}
+\label{tab:core_system_voice_summary}
+\end{table}
+
+\noindent $^\dagger$ Context success is computed only on samples where context was marked applicable.
+
+Category-level analysis provides a more diagnostic view of the model's behavior. The results show that code-mixed prompts, prosody-sensitive prompts, and phonetic stress cases are the principal sources of perceptual degradation, while long-form, named-entity, and stress-test prompts remained relatively robust under the current annotation scheme.
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{l c c c}
+\toprule
+Category & Samples & Incorrect-word Rate & Slightly/Very Robotic Rate \\
+\midrule
+Code-Mix & 40 & 95.0\% & 15.0\% \\
+Numbers & 60 & 16.7\% & 20.0\% \\
+Phonetics & 60 & 5.0\% & 36.7\% \\
+Prosody & 60 & 3.3\% & 45.0\% \\
+Conjuncts & 60 & 0.0\% & 16.7\% \\
+Long\_Form & 40 & 5.0\% & 0.0\% \\
+Named\_Entity & 40 & 0.0\% & 0.0\% \\
+Stress\_Test & 40 & 0.0\% & 0.0\% \\
+\bottomrule
+\end{tabular}
+\caption{Category-wise error concentration and perceptual degradation}
+\label{tab:core_system_category_summary}
+\end{table}
+
+Two conclusions follow from these results. First, the model's \textit{baseline readability} is strong. Second, most quality failures are not random; they are concentrated in specific linguistic phenomena, especially multilingual token handling, prosodic expressiveness, and normalization-heavy inputs.
+
+\section{Observed Model Limitations}
+
+Manual inspection of synthesized samples and annotator comments reveals several recurring patterns of synthesis errors.
+
+\subsection{Code-Mixed Language Handling}
+
+Code-mixed language handling emerges as the strongest and most systematic weakness in the entire chapter. Of the 40 code-mix evaluations, 38 contained incorrect-word markings, producing an error concentration of 95.0\%. These failures were not limited to rare English words or domain-specific jargon; they also occurred in common mixed-language constructions used in everyday conversational Bangla.
+
+Representative examples include:
+
+\bengalifont আজকের \normalfont meeting \bengalifont টা কয়টায়? \normalfont
+
+\bengalifont দয়া করে \normalfont File \bengalifont-টা আমাকে \normalfont send \bengalifont করে দিও। \normalfont
+
+\bengalifont আজকের \normalfont Internet \bengalifont স্পিড খুব \normalfont slow \bengalifont কাজ করছে। \normalfont
+
+In these cases, the embedded English tokens were frequently skipped, partially spoken, or judged phonetically unnatural by the annotators. This suggests that the acoustic model is not the only bottleneck. The normalization and tokenization stack that prepares mixed Bangla-English inputs for synthesis appears to be insufficiently robust.
+
+\subsection{Symbol and Operator Rendering}
+
+The system also demonstrates incomplete handling of symbolic expressions and formatted numeric strings. The clearest evidence arises in the number-focused prompts, where explicit number mistakes were recorded in 4 of 60 evaluations (6.7\%). Although this is a low incidence relative to the total test pool, the affected cases are important because they involve semantically dense content.
+
+In the expression:
+
+\bengalifont
+যোগফল: ১০ + ৫ = ১৫
+\normalfont
+
+annotators observed that the plus symbol was omitted while the equality operator was verbalized. Similarly, the year expression \bengalifont ১৯৭১ \normalfont and the phone number \bengalifont ০১৭১১-০০০০০০ \normalfont received explicit correction notes from annotators, indicating that the model's normalization strategy does not yet handle all high-value numeric formats in a natural spoken form.
+
+\subsection{Complex Conjunct Words}
+
+Bangla contains several complex conjunct consonants that can be challenging for speech synthesis systems. While the current annotation protocol did not record any entries in the dedicated \texttt{ConjunctMistakes} field, the conjunct-focused prompt family still exhibited measurable perceptual strain. Ten of the 60 conjunct evaluations (16.7\%) were judged slightly or very robotic, and four conjunct samples attracted explicit notes.
+
+The relevant difficulty appears to be \textit{perceptual stability} rather than wholesale collapse. In other words, the system is often intelligible on conjunct-heavy prompts, but the pronunciation and prosodic contour may still sound brittle or synthetic. This is consistent with reported issues around words containing clusters such as:
+
+\bengalifont
+জ্ঞ, হ্ম
+\normalfont
+
+and words such as:
+
+\bengalifont
+বিজ্ঞান, ব্রাহ্মণবাড়িয়া
+\normalfont
+
+which were highlighted during review as sounding unstable in specific samples.
+
+\subsection{Contextual Prosody}
+
+Although most individual words are rendered intelligibly, sentence-level prosody is not always aligned with communicative intent. The annotation protocol marks context only where it is relevant, and among the 38 context-applicable evaluations only 25 were judged correct. This yields a context-success rate of 65.8\%.
+
+The separate prosody-focused prompt family reinforces the same diagnosis. Within this category, 27 of 60 evaluations (45.0\%) were judged slightly or very robotic, making prosody the weakest perceptual category in the chapter. Typical issues include insufficient hesitation modeling, weak clause-boundary contouring, reduced expressive variation in exclamatory speech, and flat delivery in conversational prompts. These findings indicate that the model's segmental generation is stronger than its discourse-level prosodic control.
+
+\section{Linguistic Correctness}
+
+The first evaluation layer focuses on the accuracy with which the system pronounces Bangla words and phonological structures. The current evidence supports a strong sentence-level conclusion: the system is consistently intelligible and generally reliable on ordinary Bangla prompts. However, correctness is not uniform across all linguistic conditions, and the error profile is highly structured.
+
+\subsection{Sentence-Level Intelligibility}
+
+Sentence-level intelligibility was successful in all 400 voice-specific evaluations. This is the strongest quantitative result in the chapter. It indicates that, despite perceptual weaknesses in naturalness and expressiveness, the system is able to communicate the semantic content of the sentence in a comprehensible form.
+
+This result is important because it separates \textit{usability} from \textit{perceptual realism}. A sample may sound mildly synthetic yet remain fully understandable. The model's current performance suggests that its primary challenge is not whether it can be understood at all, but whether it can sound natural under linguistically demanding conditions.
+
+\subsection{Lexical Error Concentration}
+
+The current annotation protocol records explicit lexical deviation through the \texttt{IncorrectWords} field. Using this sentence-level proxy, 55 of the 400 evaluations (13.8\%) contained at least one incorrect-word marking. However, these lexical deviations are not uniformly distributed across prompt families. Code-mixed prompts alone account for 38 of the 55 marked cases, and number-focused prompts account for another 10.
+
+This concentration is diagnostically significant. It indicates that the system's lexical weaknesses arise primarily when pronunciation depends on upstream normalization, multilingual token handling, or highly conventionalized spoken forms rather than on standard Bangla lexical decoding alone.
+
+\subsection{Phonetic and Conjunct Sensitivity}
+
+The phonetics prompt family exhibited 22 non-human-like judgments out of 60 evaluations (36.7\%), making it one of the weakest categories in perceptual quality. Although only 3 of those 60 evaluations received explicit incorrect-word markings, the broader pattern suggests that many phonetic issues manifest as \textit{unnaturalness} rather than outright incomprehensibility.
+
+The same interpretation applies, though more mildly, to conjunct-heavy prompts. The conjunct family did not produce explicit conjunct tags in the structured field, but it still showed perceptual fragility through robotic judgments and note-level observations. Taken together, the phonetics and conjunct results imply that fine-grained Bangla pronunciation quality remains a refinement target even when coarse sentence intelligibility remains high.
+
+\subsection{Numeric and Symbol Rendering}
+
+Numeric expressions require a text normalization layer that maps written forms to natural spoken Bangla. The current evaluation shows that this normalization stage is not uniformly reliable. The observed mistakes on year verbalization and phone-number reading are not merely cosmetic; they indicate that semantically important structured inputs may be rendered in a way that sounds unnatural or incomplete.
+
+From a deployment perspective, this matters because TTS systems are frequently used for instructional content, public communication, accessibility tools, and educational resources, all of which routinely contain dates, numbers, telephone contacts, and arithmetic expressions. Even a modest error rate in such categories therefore carries disproportionate practical importance.
+
+\section{Human-Likeness}
+
+This layer examines whether the system sounds convincingly human rather than merely understandable. The manual annotations show that the model is often natural, but not consistently so across all prompt classes.
+
+\subsection{Naturalness}
+
+Naturalness in the current evaluation is recorded through three perceptual classes: \textit{Human-like}, \textit{Slightly Robotic}, and \textit{Very Robotic}. Across all 400 evaluations, 323 outputs (80.8\%) were judged human-like. This is a strong result and indicates that the model often produces outputs acceptable for realistic listening. However, the remaining 77 outputs judged robotic are too many to dismiss as isolated outliers.
+
+The distribution of robotic judgments is also not random. Prosody, phonetics, numbers, and conjuncts collectively account for the majority of non-human-like outputs. By contrast, named-entity prompts, long-form prompts, and stress-test prompts remained fully human-like under the current annotation set. This suggests that the model's naturalness degrades most when it must combine segmental accuracy with expressive or normalization-sensitive behavior.
+
+\subsection{Prosodic Appropriateness}
+
+Prosody is the weakest dimension of the human-likeness layer. The dedicated prosody prompts produced the highest robotic rate of any category, and context-sensitive prompts achieved only moderate success when context was relevant. The evidence therefore points to a model that can pronounce most words correctly at a broad level but does not consistently place pauses, emphasis, or melodic contour in a fully human manner.
+
+This distinction is especially important for general-purpose deployment. A TTS system intended for educational material, assistive reading, announcements, or conversational interfaces must not only pronounce words correctly but also guide listener interpretation through rhythm and intonation. The current system has not yet fully achieved that level of expressive control.
+
+\subsection{Fluency Interpretation}
+
+Although the current annotation form does not provide a dedicated 1--5 fluency score, fluency-relevant problems still surface indirectly through naturalness judgments and free-text notes. Missing intonation, awkward pacing, and locally brittle delivery patterns all contribute to the robotic classifications observed in the chapter. Accordingly, the present results support a cautious conclusion: the model's fluency is generally serviceable, but not yet sufficiently stable to be treated as a solved problem.
+
+\section{Cross-Voice Comparative Assessment}
+
+The two available voices are broadly competitive, but they are not identical in behavior. Naturalness judgments differed between the two voices on 35 of the 200 prompts, while context judgments differed on 9 prompts. This indicates meaningful prompt-level divergence even when the aggregate performance gap remains moderate.
+
+Preference judgments provide a useful listener-centered summary. More than half of the prompts (53.0\%) were judged \textit{Equal}, indicating that listeners often found both voices comparably acceptable. When a preference was expressed, the female voice was favored more often than the male voice (27.5\% versus 19.5\%). This is notable because the male voice achieved slightly stronger aggregate naturalness. The result suggests that overall preference is influenced by more than roboticity alone; timbral comfort, sentence fit, and local prosodic suitability likely also contribute.
+
+\section{Top Systemic Weaknesses Identified}
+
+The manual evaluation reveals the following five systemic weaknesses in the current TTS core system:
+
+\begin{enumerate}
+\item \textbf{Code-mixed token handling is the dominant failure mode.} English words embedded inside Bangla sentences are frequently skipped or rendered unnaturally, indicating insufficient multilingual normalization support.
+\item \textbf{Prosodic control remains underdeveloped.} Context-sensitive delivery succeeds only moderately, and prosody-specific prompts exhibit the highest roboticity rate in the chapter.
+\item \textbf{Normalization-heavy inputs remain vulnerable.} Years, phone numbers, and symbolic expressions can be intelligible yet still sound unnatural or incomplete when spoken aloud.
+\item \textbf{Fine-grained phonetic realism is not yet stable.} Phonetic stress prompts produce a large share of non-human-like outputs, even when sentence-level intelligibility remains intact.
+\item \textbf{Conjunct-heavy words are perceptually brittle.} While not catastrophic, conjunct clusters continue to expose a weakness in pronunciation smoothness and local realism.
+\end{enumerate}
+
+Collectively, these weaknesses indicate that the core acoustic model is already functional, but the surrounding text normalization, multilingual handling, and expressive prosody subsystems require targeted improvement before the system can be described as uniformly production-grade.
+
+\section{Interpretation and Scope of Evidence}
+
+The current chapter is based on a robust but still bounded manual annotation protocol. It supports strong claims about sentence-level intelligibility, naturalness, category-wise weakness patterns, and comparative voice preference. It does not yet support exact token-level word accuracy, structured phoneme-confusion counts, MOS-style 1--5 naturalness scoring, formal listener-comfort measures, or task-performance experiments such as number recall or comprehension testing.
+
+These omitted analyses should not be interpreted as a weakness of the current findings; rather, they define the boundary of what the present annotation instrument can support rigorously. A companion follow-up questionnaire for annotators has been prepared separately so that future iterations of the report can incorporate these additional analyses without changing the core structure of this chapter.
+
+\section{Conclusion}
+
+This chapter presented a structured and data-grounded evaluation of the Bangla Text-to-Speech core system using the completed manual annotations currently available for the synthesized outputs.
+
+The results indicate that the system is already \textbf{strong in intelligibility and broadly strong in perceptual quality}. All 400 evaluated outputs were understood successfully at the sentence level, and more than four out of five evaluations were judged human-like. These findings confirm that the system is not merely functional in a technical sense; it is already capable of delivering readable and usable Bangla speech for many classes of content.
+
+At the same time, the evaluation exposes several non-trivial weaknesses that materially affect deployment readiness. Code-mixed language handling is the clearest and most severe problem. Prosodic appropriateness remains the weakest perceptual dimension. Normalization-heavy inputs such as years, phone numbers, and operator expressions still produce localized failures. Conjunct-heavy and phonetically sensitive prompts remain intelligible but are not always fully natural.
+
+The most defensible overall conclusion is therefore balanced. The current TTS model is \textbf{usable and acoustically competent}, but it is \textbf{not yet uniformly robust} across multilingual text, expressive delivery, and normalization-sensitive utterances. Addressing these weaknesses will be essential for moving the system from strong prototype quality toward dependable real-world deployment.

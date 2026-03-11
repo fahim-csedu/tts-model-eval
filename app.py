@@ -32,6 +32,29 @@ def get_excel_data():
         print(f"Error reading Excel: {e}")
         return None
 
+def get_item_text(sheet_name, item_id, xls=None):
+    try:
+        workbook = xls if xls is not None else get_excel_data()
+        if workbook is None:
+            return None
+
+        df = pd.read_excel(workbook, sheet_name=sheet_name)
+        row = df[df['ItemID'].astype(str) == str(item_id)]
+        if row.empty:
+            return None
+
+        return str(row.iloc[0]['Text'])
+    except Exception as e:
+        print(f"Error resolving text for {sheet_name}/{item_id}: {e}")
+        return None
+
+def build_annotation_payload(sheet_name, item_id, annotation, xls=None):
+    payload = dict(annotation or {})
+    text = get_item_text(sheet_name, item_id, xls=xls)
+    if text is not None:
+        payload['Text'] = text
+    return payload
+
 def resolve_peer_sheet(sheet_name, all_sheet_names):
     explicit_map = {
         'Atika - Male': 'Atika - Female',
@@ -180,9 +203,10 @@ def save_annotation():
     save_dir = os.path.join(ANNOTATION_DIR, sheet_name)
     os.makedirs(save_dir, exist_ok=True)
     
+    annotation_payload = build_annotation_payload(sheet_name, item_id, data.get('annotation'))
     filepath = os.path.join(save_dir, f"{item_id}.json")
     with open(filepath, 'w', encoding='utf-8') as f:
-        json.dump(data['annotation'], f, ensure_ascii=False, indent=4)
+        json.dump(annotation_payload, f, ensure_ascii=False, indent=4)
         
     return jsonify({'status': 'success'})
 
@@ -193,6 +217,7 @@ def save_multiple_annotations():
          return jsonify({'status': 'error', 'message': 'Expected list of annotations'}), 400
     
     try:
+        xls = get_excel_data()
         for entry in data:
             sheet_name = entry.get('sheet_name')
             item_id = entry.get('item_id')
@@ -204,9 +229,10 @@ def save_multiple_annotations():
             save_dir = os.path.join(ANNOTATION_DIR, sheet_name)
             os.makedirs(save_dir, exist_ok=True)
             
+            annotation_payload = build_annotation_payload(sheet_name, item_id, annotation, xls=xls)
             filepath = os.path.join(save_dir, f"{item_id}.json")
             with open(filepath, 'w', encoding='utf-8') as f:
-                json.dump(annotation, f, ensure_ascii=False, indent=4)
+                json.dump(annotation_payload, f, ensure_ascii=False, indent=4)
                 
         return jsonify({'status': 'success'})
     except Exception as e:
