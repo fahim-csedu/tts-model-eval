@@ -1,0 +1,8 @@
+{
+  "run_id": "20260312_052439_78db0a7b",
+  "model_eval_dir": "model_eval_v2",
+  "workbook_path": "model_eval_v2/Model Evaluation Results.xlsx",
+  "copied_audio_files": 867,
+  "missing_audio_files": 333,
+  "source_csv": "bangla_tts_300_diagnostic_prompts.csv"
+}

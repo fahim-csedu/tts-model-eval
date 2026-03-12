@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% macro render_panel(panel_key, panel_title, chip_label, sheet_value, form_data, is_current=False) %}
+{% macro render_panel(panel_key, panel_title, chip_label, sheet_value, form_data, audio_available, is_current=False) %}
 <div class="card audio-card fade-up" id="{{ panel_key }}PanelCard" data-panel-card="{{ panel_key }}">
     <div class="card-header">
         <div class="panel-header">
@@ -9,6 +9,11 @@
         </div>
     </div>
     <div class="card-body">
+        {% if not audio_available %}
+        <div class="alert alert-warning">
+            Audio for this item is not available yet in {{ sheet_value }}.
+        </div>
+        {% endif %}
         <audio controls class="w-100 mb-3" id="{{ panel_key }}Audio">
             <source src="/audio/{{ sheet_value }}/{{ item_id }}.wav" type="audio/wav">
             Your browser does not support the audio element.
@@ -129,11 +134,13 @@
             </div>
             <div class="list-group list-group-flush">
             {% for item in items %}
-                <a href="/annotate/{{ sheet_name }}/{{ item.id }}" class="list-group-item list-group-item-action {{ 'active' if item.id == item_id else '' }}">
+                <a href="{% if item.audio_available %}/annotate/{{ sheet_name }}/{{ item.id }}{% else %}#{% endif %}" class="list-group-item list-group-item-action {{ 'active' if item.id == item_id else '' }} {{ '' if item.audio_available else 'disabled opacity-75' }}">
                     <div class="d-flex w-100 justify-content-between">
                         <span class="text-truncate" style="max-width: 85%;">{{ item.id }}</span>
                         {% if item.status == 'Annotated' %}
                         <span class="text-success">&check;</span>
+                        {% elif item.status == 'Missing Audio' %}
+                        <span class="text-warning" title="Audio missing">!</span>
                         {% endif %}
                     </div>
                 </a>
@@ -176,6 +183,7 @@
                     'Primary',
                     sheet_name,
                     existing_data,
+                    primary_audio_available,
                     True
                 ) }}
             </div>
@@ -187,7 +195,8 @@
                     'Male' if 'Male' in peer_sheet_name else 'Female' if 'Female' in peer_sheet_name else peer_sheet_name,
                     'Peer',
                     peer_sheet_name,
-                    peer_data
+                    peer_data,
+                    peer_audio_available
                 ) }}
             </div>
             {% endif %}

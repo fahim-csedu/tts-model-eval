@@ -1,3 +1,6 @@
 .DS_Store
 **/.DS_Store
+__pycache__/
+outputs/
 model_eval/annotations/
+model_eval_v2/annotations/

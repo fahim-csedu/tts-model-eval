@@ -1,0 +1,588 @@
+{% extends 'base.html' %}
+
+{% macro hint(label, text) -%}
+<span class="field-hint" tabindex="0" data-tooltip="{{ text }}">{{ label }}</span>
+{%- endmacro %}
+
+{% block content %}
+<div class="row g-4">
+    <div class="col-lg-3 col-md-4">
+        <div class="sidebar fade-up">
+            <div class="sidebar-header">
+                <a href="/items" class="btn btn-outline-secondary btn-sm">&larr; Back</a>
+                <span class="sidebar-title">Items</span>
+            </div>
+            <div class="list-group list-group-flush">
+            {% for item in items %}
+                <a href="/annotate/{{ item.id }}" class="list-group-item list-group-item-action {{ 'active' if item.id == item_id else '' }} {{ '' if item.all_audio_available else 'disabled opacity-75' }}">
+                    <div class="d-flex w-100 justify-content-between">
+                        <span class="text-truncate" style="max-width: 72%;">{{ item.id }}</span>
+                        {% if item.status == 'Annotated' %}
+                        <span class="badge bg-success rounded-pill">Done</span>
+                        {% elif item.status == 'Incomplete Audio' %}
+                        <span class="badge bg-secondary rounded-pill">Audio</span>
+                        {% else %}
+                        <span class="badge bg-warning text-dark rounded-pill">Todo</span>
+                        {% endif %}
+                    </div>
+                </a>
+            {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-9 col-md-8">
+        <div class="card mb-4 annotate-toolbar fade-up">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h5 class="card-title">
+                        ID: {{ item_id }}
+                        <a href="/help" target="_blank" class="text-decoration-none ms-2" title="How to use?">
+                            <small>?</small>
+                        </a>
+                    </h5>
+                    <div>
+                        {% if prev_id %}
+                        <a href="/annotate/{{ prev_id }}" class="btn btn-outline-secondary btn-sm">&larr; Prev</a>
+                        {% endif %}
+                        {% if next_id %}
+                        <a href="/annotate/{{ next_id }}" class="btn btn-outline-secondary btn-sm" id="nextItemBtn">Next &rarr;</a>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="annotation-brief">
+                    <div class="annotation-brief__text">{{ text }}</div>
+                    <div class="annotation-meta">
+                        {% if category %}<span class="meta-chip">{{ category }}</span>{% endif %}
+                        {% if subcategory %}<span class="meta-chip">{{ subcategory }}</span>{% endif %}
+                        {% if target_feature %}<span class="meta-chip meta-chip-accent">{{ target_feature }}</span>{% endif %}
+                    </div>
+                    <small class="text-muted d-block mt-2">Listen to all four clips, then fill one shared annotation for the text. Use notes only when the issue is voice-specific.</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="card fade-up mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">All Voices</h5>
+            </div>
+            <div class="card-body">
+                <div class="voice-grid">
+                    {% for voice in voices %}
+                    <div class="voice-card {{ '' if voice.audio_available else 'voice-card-missing' }}">
+                        <div class="voice-card__header">
+                            <strong>{{ voice.label }}</strong>
+                            {% if voice.audio_available %}
+                            <span class="voice-status voice-status-ready">Ready</span>
+                            {% else %}
+                            <span class="voice-status voice-status-missing">Missing</span>
+                            {% endif %}
+                        </div>
+                        <audio controls class="w-100" {% if not voice.audio_available %}disabled{% endif %}>
+                            <source src="{{ voice.audio_url }}" type="audio/wav">
+                        </audio>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="card fade-up mb-5">
+            <div class="card-header shared-form-header">
+                <div>
+                    <h5 class="mb-0">Shared Annotation</h5>
+                    <small class="text-muted">Use one form for the text. Mark tokens only when the issue is common across the clips.</small>
+                </div>
+                <button type="button" class="btn btn-success" id="markCleanBtn">Mark Clean</button>
+            </div>
+            <div class="card-body">
+                <form id="sharedAnnotationForm">
+                    <div class="quick-grid">
+                        <section class="quick-section">
+                            <label class="form-label d-flex align-items-center gap-2">
+                                Naturalness
+                                {{ hint('?', 'Overall human-likeness across the four clips. Choose the level that best represents the group, not the single best clip.') }}
+                            </label>
+                            <div class="radio-row">
+                                {% for value in ['Human-like', 'Slightly Robotic', 'Very Robotic'] %}
+                                <label class="choice-pill">
+                                    <input type="radio" name="Naturalness" value="{{ value }}" {% if existing_data.get('Naturalness') == value %}checked{% endif %}>
+                                    <span>{{ value }}</span>
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </section>
+
+                        <section class="quick-section">
+                            <label class="form-label d-flex align-items-center gap-2">
+                                Intelligibility
+                                {{ hint('?', 'Can a listener reliably understand the intended words from the set of clips?') }}
+                            </label>
+                            <div class="radio-row">
+                                {% for value in ['Yes', 'Mostly', 'Barely', 'No'] %}
+                                <label class="choice-pill">
+                                    <input type="radio" name="Intelligibility" value="{{ value }}" {% if existing_data.get('Intelligibility') == value %}checked{% endif %}>
+                                    <span>{{ value }}</span>
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </section>
+
+                        <section class="quick-section">
+                            <label class="form-label d-flex align-items-center gap-2">
+                                Context
+                                {{ hint('?', 'Use this only when the sentence has a clear prosodic target such as a question, contrast, sarcasm, or emphasis.') }}
+                            </label>
+                            <div class="radio-row">
+                                {% for value in ['Yes', 'No', 'Not Applicable'] %}
+                                <label class="choice-pill">
+                                    <input type="radio" name="Context" value="{{ value }}" {% if existing_data.get('Context') == value %}checked{% endif %}>
+                                    <span>{{ value }}</span>
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </section>
+                    </div>
+
+                    <section class="token-workbench token-workbench-shared my-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div>
+                                <label class="form-label mb-1 d-flex align-items-center gap-2">
+                                    Token-Level Errors
+                                    {{ hint('?', 'Click a token only if the issue is shared enough across the clips to be worth annotating once. Then classify the error below.') }}
+                                </label>
+                                <small class="text-muted">Click a token to add a shared error entry.</small>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="clearTokenErrorsBtn">Clear All</button>
+                        </div>
+                        <div id="interactive-text-shared" class="interactive-text"></div>
+                        <div class="token-meta-row">
+                            <small class="text-muted" id="selectionMetaShared"></small>
+                            <small class="text-muted" id="activeTokenMetaShared"></small>
+                        </div>
+                    </section>
+
+                    <section class="token-errors-section mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <label class="form-label mb-0">Error Cards</label>
+                            <small class="text-muted">Radio buttons are faster here than dropdowns.</small>
+                        </div>
+                        <input type="hidden" name="TokenErrors" id="shared_tokenErrorsJson" value="">
+                        <div class="token-error-list" id="shared_tokenErrorList"></div>
+                    </section>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label d-flex align-items-center gap-2">
+                                Incorrect Token Summary
+                                {{ hint('?', 'Auto-filled from selected tokens for compatibility with older exports.') }}
+                            </label>
+                            <textarea class="form-control" name="IncorrectWords" id="shared_incorrectWordsInput" rows="2" readonly>{{ existing_data.get('IncorrectWords', '') }}</textarea>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label d-flex align-items-center gap-2">
+                                Number / Symbol Notes
+                                {{ hint('?', 'Only add if a number or symbol reading issue is important and not already obvious from token labels.') }}
+                            </label>
+                            <input type="text" class="form-control" name="NumberMistakes" value="{{ existing_data.get('NumberMistakes', '') }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label d-flex align-items-center gap-2">
+                                Conjunct / G2P Notes
+                                {{ hint('?', 'Use for shared orthography-to-pronunciation issues that need extra explanation.') }}
+                            </label>
+                            <input type="text" class="form-control" name="ConjunctMistakes" value="{{ existing_data.get('ConjunctMistakes', '') }}">
+                        </div>
+                    </div>
+
+                    <div class="mt-3">
+                        <label class="form-label d-flex align-items-center gap-2">
+                            Notes
+                            {{ hint('?', 'Use this for voice-specific exceptions, comparisons, or anything not captured by the shared labels.') }}
+                        </label>
+                        <textarea class="form-control" name="Notes" rows="3">{{ existing_data.get('Notes', '') }}</textarea>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="fixed-action-bar">
+            <div class="container-xxl action-shell d-flex justify-content-between align-items-center">
+                <div class="text-start small text-muted">
+                    One save writes one shared annotation for all four clips.
+                </div>
+                <button type="button" class="btn btn-primary btn-lg" id="saveSharedBtn">Save & Next</button>
+            </div>
+        </div>
+        <div style="height: 100px;"></div>
+    </div>
+</div>
+
+<script>
+    const rawText = {{ text | tojson }};
+    const existingData = {{ existing_data | tojson }};
+    const words = rawText.split(/\s+/).filter(Boolean);
+    const ERROR_CATEGORIES = [
+        { value: 'Mispronunciation / G2P', label: 'G2P' },
+        { value: 'Normalization / Symbol', label: 'Norm/Symbol' },
+        { value: 'Code-mix rendering', label: 'Code-mix' },
+        { value: 'Prosody / Stress', label: 'Prosody' },
+        { value: 'Skipped token', label: 'Skipped' },
+        { value: 'Inserted / Extra token', label: 'Inserted' },
+        { value: 'Conjunct handling', label: 'Conjunct' },
+        { value: 'Segmentation / pause', label: 'Seg/Pause' },
+        { value: 'Other', label: 'Other' }
+    ];
+    const SEVERITY_LEVELS = ['Minor', 'Moderate', 'Major', 'Critical'];
+    const SUBSYSTEM_GUESSES = ['Text normalization', 'Tokenizer', 'G2P', 'Prosody model', 'Acoustic model', 'Alignment / duration', 'Vocoder', 'Unknown'];
+    const CONFIDENCE_LEVELS = ['1', '2', '3', '4', '5'];
+
+    let isDirty = false;
+    let activeTokenIndex = null;
+    let tokenErrors = hydrateTokenErrors(existingData);
+
+    const textContainer = document.getElementById('interactive-text-shared');
+    const tokenErrorList = document.getElementById('shared_tokenErrorList');
+    const tokenErrorsInput = document.getElementById('shared_tokenErrorsJson');
+    const incorrectWordsInput = document.getElementById('shared_incorrectWordsInput');
+    const selectionMeta = document.getElementById('selectionMetaShared');
+    const activeTokenMeta = document.getElementById('activeTokenMetaShared');
+
+    function markDirty() {
+        isDirty = true;
+    }
+
+    function sanitizeToken(token) {
+        return token
+            .replace(/^[\p{P}\p{S}"'“”‘’]+|[\p{P}\p{S}"'“”‘’]+$/gu, '')
+            .trim()
+            .toLowerCase();
+    }
+
+    function normalizeTokenErrors(rawValue) {
+        if (!rawValue) return [];
+        let parsed = rawValue;
+        if (typeof rawValue === 'string') {
+            try {
+                parsed = JSON.parse(rawValue);
+            } catch (error) {
+                return [];
+            }
+        }
+        if (!Array.isArray(parsed)) return [];
+
+        return parsed
+            .map((entry) => ({
+                token_index: Number.isFinite(Number(entry.token_index)) ? Number(entry.token_index) : null,
+                token: String(entry.token || '').trim(),
+                error_category: String(entry.error_category || '').trim(),
+                severity: String(entry.severity || 'Critical').trim() || 'Critical',
+                subsystem_guess: String(entry.subsystem_guess || 'Unknown').trim() || 'Unknown',
+                annotator_confidence: String(entry.annotator_confidence || '5').trim() || '5'
+            }))
+            .filter((entry) => entry.token)
+            .sort(sortTokenErrors);
+    }
+
+    function parseSavedWords(value) {
+        if (!value) return [];
+        const commaSplit = value.split(',').map((entry) => entry.trim()).filter(Boolean);
+        if (commaSplit.length > 1) return commaSplit;
+        return value.split(/\s+/).map((entry) => entry.trim()).filter(Boolean);
+    }
+
+    function deriveLegacyTokenErrors(incorrectWords) {
+        const savedWords = parseSavedWords(incorrectWords);
+        const usedIndexes = new Set();
+        const derived = [];
+        savedWords.forEach((savedWord) => {
+            const target = sanitizeToken(savedWord);
+            for (let idx = 0; idx < words.length; idx += 1) {
+                if (usedIndexes.has(idx)) continue;
+                if (sanitizeToken(words[idx]) === target) {
+                    usedIndexes.add(idx);
+                    derived.push(createTokenError(idx));
+                    break;
+                }
+            }
+        });
+        return derived.sort(sortTokenErrors);
+    }
+
+    function hydrateTokenErrors(annotationData) {
+        const structured = normalizeTokenErrors(annotationData.TokenErrors);
+        if (structured.length) return structured;
+        return deriveLegacyTokenErrors(annotationData.IncorrectWords || '');
+    }
+
+    function sortTokenErrors(left, right) {
+        const leftIndex = left.token_index === null ? Number.MAX_SAFE_INTEGER : left.token_index;
+        const rightIndex = right.token_index === null ? Number.MAX_SAFE_INTEGER : right.token_index;
+        return leftIndex - rightIndex || left.token.localeCompare(right.token);
+    }
+
+    function createTokenError(index) {
+        return {
+            token_index: index,
+            token: words[index] || '',
+            error_category: '',
+            severity: 'Critical',
+            subsystem_guess: 'Unknown',
+            annotator_confidence: '5'
+        };
+    }
+
+    function getTokenError(index) {
+        return tokenErrors.find((entry) => entry.token_index === index);
+    }
+
+    function syncTokenFields() {
+        tokenErrors.sort(sortTokenErrors);
+        tokenErrorsInput.value = JSON.stringify(tokenErrors);
+        incorrectWordsInput.value = tokenErrors.map((entry) => entry.token).join(', ');
+        selectionMeta.textContent = `${tokenErrors.length} shared token error(s) marked`;
+        activeTokenMeta.textContent = activeTokenIndex === null
+            ? 'No token card selected'
+            : `Editing token #${activeTokenIndex + 1}: ${words[activeTokenIndex]}`;
+    }
+
+    function renderTokens() {
+        textContainer.innerHTML = '';
+        words.forEach((word, index) => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'word-token';
+            button.textContent = word;
+
+            if (getTokenError(index)) button.classList.add('selected');
+            if (activeTokenIndex === index) button.classList.add('active');
+
+            button.addEventListener('click', () => {
+                let entry = getTokenError(index);
+                if (!entry) {
+                    entry = createTokenError(index);
+                    tokenErrors.push(entry);
+                    markDirty();
+                }
+                activeTokenIndex = index;
+                syncTokenFields();
+                renderTokens();
+                renderTokenCards();
+            });
+            textContainer.appendChild(button);
+        });
+    }
+
+    function renderRadioGroup(entry, fieldName, displayLabel, options, hintText) {
+        return `
+            <div class="token-choice-group">
+                <div class="token-choice-group__label">${displayLabel}<span class="field-hint" tabindex="0" data-tooltip="${hintText}">?</span></div>
+                <div class="token-choice-options">
+                    ${options.map((option) => {
+                        const value = typeof option === 'string' ? option : option.value;
+                        const label = typeof option === 'string' ? option : option.label;
+                        const checked = entry[fieldName] === value ? 'checked' : '';
+                        return `
+                            <label class="mini-choice">
+                                <input type="radio" name="token_${entry.token_index}_${fieldName}" data-field="${fieldName}" data-token-index="${entry.token_index}" value="${value}" ${checked}>
+                                <span>${label}</span>
+                            </label>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    function renderTokenCards() {
+        if (!tokenErrors.length) {
+            tokenErrorList.innerHTML = '<div class="token-error-empty">No shared token errors marked.</div>';
+            syncTokenFields();
+            return;
+        }
+
+        tokenErrorList.innerHTML = tokenErrors.map((entry) => `
+            <div class="token-error-row ${entry.token_index === activeTokenIndex ? 'is-active' : ''}" data-token-index="${entry.token_index}">
+                <div class="token-error-row__header">
+                    <div>
+                        <span class="token-badge">#${entry.token_index + 1}</span>
+                        <span class="token-text">${entry.token}</span>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-danger" data-remove-token="${entry.token_index}">Remove</button>
+                </div>
+                ${renderRadioGroup(entry, 'error_category', 'Error Category', ERROR_CATEGORIES, 'Choose the closest description of the shared token failure.')}
+                ${renderRadioGroup(entry, 'severity', 'Severity', SEVERITY_LEVELS, 'How damaging is the error to perception or meaning?')}
+                ${renderRadioGroup(entry, 'subsystem_guess', 'Subsystem Guess', SUBSYSTEM_GUESSES, 'Best engineering guess for where the issue comes from.')}
+                ${renderRadioGroup(entry, 'annotator_confidence', 'Annotator Confidence', CONFIDENCE_LEVELS, 'How sure are you about this diagnosis?')}
+            </div>
+        `).join('');
+
+        tokenErrorList.querySelectorAll('.token-error-row').forEach((row) => {
+            row.addEventListener('click', (event) => {
+                if (event.target.closest('input, button, label')) return;
+                activeTokenIndex = Number(row.dataset.tokenIndex);
+                renderTokens();
+                renderTokenCards();
+                syncTokenFields();
+            });
+        });
+
+        tokenErrorList.querySelectorAll('[data-remove-token]').forEach((button) => {
+            button.addEventListener('click', (event) => {
+                event.stopPropagation();
+                const tokenIndex = Number(button.dataset.removeToken);
+                tokenErrors = tokenErrors.filter((entry) => entry.token_index !== tokenIndex);
+                if (activeTokenIndex === tokenIndex) {
+                    activeTokenIndex = tokenErrors.length ? tokenErrors[0].token_index : null;
+                }
+                markDirty();
+                renderTokens();
+                renderTokenCards();
+                syncTokenFields();
+            });
+        });
+
+        tokenErrorList.querySelectorAll('input[type="radio"]').forEach((input) => {
+            input.addEventListener('click', (event) => event.stopPropagation());
+            input.addEventListener('change', (event) => {
+                const fieldName = event.target.dataset.field;
+                const tokenIndex = Number(event.target.dataset.tokenIndex);
+                const entry = getTokenError(tokenIndex);
+                if (!entry) return;
+                entry[fieldName] = event.target.value;
+                activeTokenIndex = tokenIndex;
+                markDirty();
+                syncTokenFields();
+            });
+        });
+
+        syncTokenFields();
+    }
+
+    function validateForm(annotationData) {
+        if (!annotationData.Naturalness) {
+            alert('Please select a Naturalness rating.');
+            return false;
+        }
+        if (!annotationData.Intelligibility) {
+            alert('Please select an Intelligibility rating.');
+            return false;
+        }
+        if (!annotationData.Context) {
+            alert('Please select a Context rating.');
+            return false;
+        }
+
+        const parsed = normalizeTokenErrors(annotationData.TokenErrors);
+        const missingCategory = parsed.find((entry) => !entry.error_category);
+        if (missingCategory) {
+            alert(`Please choose an error category for token "${missingCategory.token}".`);
+            return false;
+        }
+        return true;
+    }
+
+    function markClean() {
+        document.querySelector('input[name="Naturalness"][value="Human-like"]').checked = true;
+        document.querySelector('input[name="Intelligibility"][value="Yes"]').checked = true;
+        document.querySelector('input[name="Context"][value="Not Applicable"]').checked = true;
+        document.querySelector('input[name="NumberMistakes"]').value = '';
+        document.querySelector('input[name="ConjunctMistakes"]').value = '';
+        document.querySelector('textarea[name="Notes"]').value = '';
+        tokenErrors = [];
+        activeTokenIndex = null;
+        markDirty();
+        renderTokens();
+        renderTokenCards();
+        syncTokenFields();
+    }
+
+    if (!existingData.Context) {
+        const defaultContext = document.querySelector(`input[name="Context"][value="${rawText.includes('?') ? 'No' : 'Not Applicable'}"]`);
+        if (defaultContext) defaultContext.checked = true;
+    }
+
+    renderTokens();
+    renderTokenCards();
+    syncTokenFields();
+
+    document.getElementById('clearTokenErrorsBtn').addEventListener('click', () => {
+        tokenErrors = [];
+        activeTokenIndex = null;
+        markDirty();
+        renderTokens();
+        renderTokenCards();
+        syncTokenFields();
+    });
+
+    document.getElementById('markCleanBtn').addEventListener('click', markClean);
+
+    document.getElementById('sharedAnnotationForm').addEventListener('input', markDirty);
+    document.getElementById('sharedAnnotationForm').addEventListener('change', markDirty);
+
+    window.addEventListener('beforeunload', (event) => {
+        if (!isDirty) return;
+        event.preventDefault();
+        event.returnValue = '';
+    });
+
+    document.getElementById('saveSharedBtn').addEventListener('click', function (event) {
+        event.preventDefault();
+        const form = document.getElementById('sharedAnnotationForm');
+        const formData = new FormData(form);
+        const annotationData = Object.fromEntries(formData.entries());
+
+        if (!validateForm(annotationData)) {
+            return;
+        }
+
+        const button = this;
+        const originalText = button.innerText;
+        button.disabled = true;
+        button.innerText = 'Saving...';
+
+        fetch('/api/save_shared', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                item_id: {{ item_id | tojson }},
+                annotation: annotationData,
+            }),
+        })
+            .then((response) => response.json())
+            .then((data) => {
+                if (data.status !== 'success') {
+                    throw new Error(data.message || 'Unknown error');
+                }
+                isDirty = false;
+                button.innerText = 'Saved';
+
+                const activeSidebarItem = document.querySelector('.list-group-item.active');
+                if (activeSidebarItem) {
+                    const existingBadge = activeSidebarItem.querySelector('.badge');
+                    if (existingBadge) {
+                        existingBadge.className = 'badge bg-success rounded-pill';
+                        existingBadge.textContent = 'Done';
+                    }
+                }
+
+                setTimeout(() => {
+                    const nextButton = document.getElementById('nextItemBtn');
+                    if (nextButton) {
+                        window.location.href = nextButton.href;
+                    } else {
+                        button.disabled = false;
+                        button.innerText = 'Saved';
+                    }
+                }, 250);
+            })
+            .catch((error) => {
+                alert(`Error saving annotation: ${error.message}`);
+                button.disabled = false;
+                button.innerText = originalText;
+            });
+    });
+</script>
+{% endblock %}

@@ -42,6 +42,7 @@ import csv
 import json
 import os
 import re
+import shutil
 import statistics
 import sys
 import time
@@ -149,6 +150,25 @@ def safe_filename(s: str, max_len: int = 80) -> str:
     return s[:max_len] if len(s) > max_len else s
 
 
+ANNOTATION_COLUMNS = [
+    "Naturalness: Does it sound robotic or human?",
+    "\nIntelligibility: Can you understand every word clearly?",
+    "\nContext: Did it get the question/sarcasm tone right?",
+    "List of IncorrectWords",
+    "NumberMistakes",
+    "ConjunctMistakes",
+    "Notes",
+    "Preference",
+]
+
+VOICE_TAG_TO_SHEET_NAME = {
+    "male_spk0": "Male Speaker 0",
+    "male_spk1": "Male Speaker 1",
+    "female_spk0": "Female Speaker 0",
+    "female_spk1": "Female Speaker 1",
+}
+
+
 # -----------------------------
 # Data structures
 # -----------------------------
@@ -164,6 +184,10 @@ class RequestCase:
     speaker: int
     voice_tag: str
     kind: str  # normal | negative | burst | reconnect
+    source_name: Optional[str] = None
+    category: Optional[str] = None
+    subcategory: Optional[str] = None
+    target_feature: Optional[str] = None
 
 @dataclass
 class ResponseCase:
@@ -464,6 +488,59 @@ def read_texts_from_excel(xlsx: Path, sheet: str) -> List[Tuple[Optional[str], s
         out.append((item_id, text))
     return out
 
+def read_prompt_metadata_from_excel(xlsx: Path, sheet: str) -> Dict[str, Dict[str, str]]:
+    df = pd.read_excel(xlsx, sheet_name=sheet)
+    if "ItemID" not in df.columns:
+        return {}
+
+    meta: Dict[str, Dict[str, str]] = {}
+    for _, row in df.iterrows():
+        if pd.isna(row["ItemID"]):
+            continue
+        item_id = str(row["ItemID"]).strip()
+        meta[item_id] = {
+            "source_name": f"excel:{sheet}",
+            "category": str(row.get("Category", "")).strip() if pd.notna(row.get("Category", "")) else "",
+            "subcategory": str(row.get("Subcategory", "")).strip() if pd.notna(row.get("Subcategory", "")) else "",
+            "target_feature": str(row.get("Target_Feature", "")).strip() if pd.notna(row.get("Target_Feature", "")) else "",
+        }
+    return meta
+
+def read_prompts_from_csv(
+    csv_path: Path,
+    id_col: str,
+    text_col: str,
+    category_col: Optional[str],
+    subcategory_col: Optional[str],
+    target_col: Optional[str],
+) -> Tuple[List[Tuple[Optional[str], str]], Dict[str, Dict[str, str]]]:
+    df = pd.read_csv(csv_path)
+    if text_col not in df.columns:
+        raise ValueError(f"CSV file '{csv_path}' missing required column '{text_col}'")
+
+    prompts: List[Tuple[Optional[str], str]] = []
+    meta: Dict[str, Dict[str, str]] = {}
+
+    for row_index, row in df.iterrows():
+        text = str(row[text_col]).strip() if pd.notna(row[text_col]) else ""
+        if not text:
+            continue
+
+        if id_col and id_col in df.columns and pd.notna(row[id_col]):
+            item_id = str(row[id_col]).strip()
+        else:
+            item_id = f"P-{row_index + 1:04d}"
+
+        prompts.append((item_id, text))
+        meta[item_id] = {
+            "source_name": f"csv:{csv_path.name}",
+            "category": str(row[category_col]).strip() if category_col and category_col in df.columns and pd.notna(row[category_col]) else "",
+            "subcategory": str(row[subcategory_col]).strip() if subcategory_col and subcategory_col in df.columns and pd.notna(row[subcategory_col]) else "",
+            "target_feature": str(row[target_col]).strip() if target_col and target_col in df.columns and pd.notna(row[target_col]) else "",
+        }
+
+    return prompts, meta
+
 def cap_prompts(prompts: List[Tuple[Optional[str], str]], max_items: Optional[int]) -> List[Tuple[Optional[str], str]]:
     if max_items is None or max_items <= 0:
         return prompts
@@ -498,12 +575,15 @@ def build_cases(
     voice_pairs: List[Tuple[str, int]],
     start_index: int,
     kind: str,
+    prompt_metadata: Optional[Dict[str, Dict[str, str]]] = None,
+    source_name: Optional[str] = None,
 ) -> List[RequestCase]:
     cases: List[RequestCase] = []
     idx = start_index
     for gender, speaker in voice_pairs:
         voice_tag = f"{gender}_spk{speaker}"
         for item_id, text in prompts:
+            meta = prompt_metadata.get(item_id, {}) if prompt_metadata and item_id else {}
             cases.append(
                 RequestCase(
                     case_id=str(uuid.uuid4()),
@@ -515,6 +595,10 @@ def build_cases(
                     speaker=speaker,
                     voice_tag=voice_tag,
                     kind=kind,
+                    source_name=meta.get("source_name", source_name),
+                    category=meta.get("category"),
+                    subcategory=meta.get("subcategory"),
+                    target_feature=meta.get("target_feature"),
                 )
             )
             idx += 1
@@ -566,7 +650,8 @@ def write_outputs(out_dir: Path, requests: List[RequestCase], responses: Dict[in
         writer = csv.DictWriter(
             f,
             fieldnames=[
-                "index", "case_id", "item_id", "kind", "voice_tag", "model", "gender", "speaker",
+                "index", "case_id", "item_id", "text", "kind", "voice_tag", "model", "gender", "speaker",
+                "source_name", "category", "subcategory", "target_feature",
                 "status_code", "guid", "rtt_ms",
                 "audio_present", "audio_bytes_len", "audio_path",
                 "wav_ok", "duration_sec", "rms", "peak",
@@ -579,8 +664,9 @@ def write_outputs(out_dir: Path, requests: List[RequestCase], responses: Dict[in
             resp = responses.get(r.index)
             if not resp:
                 writer.writerow({
-                    "index": r.index, "case_id": r.case_id, "item_id": r.item_id, "kind": r.kind,
+                    "index": r.index, "case_id": r.case_id, "item_id": r.item_id, "text": r.text, "kind": r.kind,
                     "voice_tag": r.voice_tag, "model": r.model, "gender": r.gender, "speaker": r.speaker,
+                    "source_name": r.source_name, "category": r.category, "subcategory": r.subcategory, "target_feature": r.target_feature,
                     "status_code": None, "guid": None, "rtt_ms": None,
                     "audio_present": False, "audio_bytes_len": None, "audio_path": None,
                     "wav_ok": None, "duration_sec": None, "rms": None, "peak": None,
@@ -593,11 +679,16 @@ def write_outputs(out_dir: Path, requests: List[RequestCase], responses: Dict[in
                     "index": r.index,
                     "case_id": resp.case_id,
                     "item_id": r.item_id,
+                    "text": r.text,
                     "kind": r.kind,
                     "voice_tag": r.voice_tag,
                     "model": r.model,
                     "gender": r.gender,
                     "speaker": r.speaker,
+                    "source_name": r.source_name,
+                    "category": r.category,
+                    "subcategory": r.subcategory,
+                    "target_feature": r.target_feature,
                     "status_code": resp.status_code,
                     "guid": resp.guid,
                     "rtt_ms": resp.rtt_ms,
@@ -667,6 +758,164 @@ def compute_voice_summary(csv_path: Path, out_dir: Path) -> Path:
     out_path = out_dir / "voice_summary.csv"
     vdf.to_csv(out_path, index=False)
     return out_path
+
+def compute_prompt_summary(csv_path: Path, out_dir: Path) -> Path:
+    df = pd.read_csv(csv_path)
+    normal = df[df["kind"] == "normal"].copy()
+
+    if normal.empty:
+        out_path = out_dir / "prompt_summary.csv"
+        pd.DataFrame(columns=[
+            "voice_tag",
+            "category",
+            "subcategory",
+            "n_requests",
+            "n_ok",
+            "success_rate",
+            "rtt_p50_ms",
+            "rtt_p95_ms",
+            "dur_p50_sec",
+        ]).to_csv(out_path, index=False)
+        return out_path
+
+    def pct(values: List[float], percentile: int) -> Optional[float]:
+        if not values:
+            return None
+        ordered = sorted(values)
+        index = int(round((percentile / 100.0) * (len(ordered) - 1)))
+        return float(ordered[max(0, min(index, len(ordered) - 1))])
+
+    rows = []
+    group_cols = ["voice_tag", "category", "subcategory"]
+    for keys, group in normal.groupby(group_cols, dropna=False):
+        ok = group[(group["wav_ok"] == True) & group["duration_sec"].notna()]  # noqa: E712
+        rtts = [float(value) for value in ok["rtt_ms"].dropna().tolist()]
+        durs = [float(value) for value in ok["duration_sec"].dropna().tolist()]
+        rows.append({
+            "voice_tag": keys[0],
+            "category": "" if pd.isna(keys[1]) else keys[1],
+            "subcategory": "" if pd.isna(keys[2]) else keys[2],
+            "n_requests": int(len(group)),
+            "n_ok": int(len(ok)),
+            "success_rate": float(len(ok) / len(group)) if len(group) else None,
+            "rtt_p50_ms": float(statistics.median(rtts)) if rtts else None,
+            "rtt_p95_ms": pct(rtts, 95),
+            "dur_p50_sec": float(statistics.median(durs)) if durs else None,
+        })
+
+    out_path = out_dir / "prompt_summary.csv"
+    pd.DataFrame(rows).sort_values(["voice_tag", "category", "subcategory"]).to_csv(out_path, index=False)
+    return out_path
+
+def build_annotation_sheet_df(
+    prompts: List[Tuple[Optional[str], str]],
+    prompt_metadata: Optional[Dict[str, Dict[str, str]]],
+) -> pd.DataFrame:
+    rows: List[Dict[str, Any]] = []
+    for row_index, (item_id, text) in enumerate(prompts, start=1):
+        resolved_item_id = item_id or f"P-{row_index:04d}"
+        meta = prompt_metadata.get(resolved_item_id, {}) if prompt_metadata else {}
+        row = {
+            "ItemID": resolved_item_id,
+            "Text": text,
+            "Category": meta.get("category", ""),
+            "Subcategory": meta.get("subcategory", ""),
+            "Target_Feature": meta.get("target_feature", ""),
+        }
+        for col in ANNOTATION_COLUMNS:
+            row[col] = ""
+        rows.append(row)
+    return pd.DataFrame(rows)
+
+def materialize_model_eval_dataset(
+    model_eval_dir: Path,
+    prompts: List[Tuple[Optional[str], str]],
+    prompt_metadata: Optional[Dict[str, Dict[str, str]]],
+    requests: List[RequestCase],
+    responses: Dict[int, ResponseCase],
+    run_dir: Path,
+    source_csv: Optional[Path],
+) -> Path:
+    ensure_dir(model_eval_dir)
+    audio_root = model_eval_dir / "audio"
+    annotations_root = model_eval_dir / "annotations"
+    metrics_root = model_eval_dir / "api_metrics" / run_dir.name
+    ensure_dir(audio_root)
+    ensure_dir(annotations_root)
+    ensure_dir(metrics_root)
+
+    workbook_path = model_eval_dir / "Model Evaluation Results.xlsx"
+    sheet_df = build_annotation_sheet_df(prompts, prompt_metadata)
+
+    with pd.ExcelWriter(workbook_path, engine="openpyxl") as writer:
+        for sheet_name in VOICE_TAG_TO_SHEET_NAME.values():
+            sheet_df.to_excel(writer, sheet_name=sheet_name, index=False)
+
+    for sheet_name in VOICE_TAG_TO_SHEET_NAME.values():
+        ensure_dir(audio_root / sheet_name)
+        ensure_dir(annotations_root / sheet_name)
+
+    copied_audio = 0
+    missing_audio: List[Dict[str, Any]] = []
+    for req in requests:
+        if req.kind != "normal" or not req.item_id:
+            continue
+
+        resp = responses.get(req.index)
+        sheet_name = VOICE_TAG_TO_SHEET_NAME.get(req.voice_tag)
+        if not sheet_name:
+            continue
+
+        target_path = audio_root / sheet_name / f"{req.item_id}.wav"
+        if not resp or not resp.audio_path or not resp.wav_ok:
+            missing_audio.append({
+                "item_id": req.item_id,
+                "voice_tag": req.voice_tag,
+                "index": req.index,
+                "audio_path": resp.audio_path if resp else None,
+            })
+            continue
+
+        shutil.copy2(resp.audio_path, target_path)
+        copied_audio += 1
+
+    if source_csv and source_csv.exists():
+        shutil.copy2(source_csv, model_eval_dir / source_csv.name)
+
+    for metrics_name in [
+        "results.csv",
+        "results.jsonl",
+        "summary.json",
+        "report.md",
+        "voice_summary.csv",
+        "prompt_summary.csv",
+        "unexpected_responses.json",
+    ]:
+        src = run_dir / metrics_name
+        if src.exists():
+            shutil.copy2(src, metrics_root / metrics_name)
+
+    materialization_summary = {
+        "run_id": run_dir.name,
+        "model_eval_dir": str(model_eval_dir),
+        "workbook_path": str(workbook_path),
+        "copied_audio_files": copied_audio,
+        "missing_audio_files": len(missing_audio),
+        "source_csv": str(source_csv) if source_csv else None,
+    }
+    (metrics_root / "materialization_summary.json").write_text(
+        json.dumps(materialization_summary, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+    (metrics_root / "missing_audio.json").write_text(
+        json.dumps(missing_audio, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+    (model_eval_dir / "latest_api_run.json").write_text(
+        json.dumps(materialization_summary, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+    return workbook_path
 
 def compute_summary_json(out_dir: Path, requests: List[RequestCase], client: TTSAuditClient, csv_path: Path, reconnect_ok: Optional[bool], burst_indices: List[int]) -> Path:
     total_sent = len(requests)
@@ -825,9 +1074,16 @@ def main():
                     help="Which voice matrix to test: single / gender2 / speakers2 / all4.")
 
     ap.add_argument("--text-file", type=str, default=None)
+    ap.add_argument("--csv-file", type=str, default=None, help="CSV prompt file path.")
+    ap.add_argument("--csv-id-col", type=str, default="id")
+    ap.add_argument("--csv-text-col", type=str, default="prompt")
+    ap.add_argument("--csv-category-col", type=str, default="bucket")
+    ap.add_argument("--csv-subcategory-col", type=str, default="subcategory")
+    ap.add_argument("--csv-target-col", type=str, default="target_failure")
     ap.add_argument("--excel", type=str, default=None, help="Excel file path. Expects sheets 'Male' and 'Female' with columns ItemID, Text.")
     ap.add_argument("--excel-sheet", type=str, default=None, help="If set, only use this sheet (e.g., Male). Otherwise uses both (Male+Female).")
     ap.add_argument("--max-items", type=int, default=None, help="Cap prompts per source/sheet for quick sampling (e.g., 20).")
+    ap.add_argument("--materialize-eval-dir", type=str, default=None, help="If set, build/update a model_eval-style annotation dataset from normal requests.")
 
     ap.add_argument("--out-dir", type=str, default="outputs")
     ap.add_argument("--timeout-sec", type=int, default=90)
@@ -865,16 +1121,48 @@ def main():
 
     requests: List[RequestCase] = []
     next_index = 0
+    prompt_metadata: Dict[str, Dict[str, str]] = {}
+    prompts: List[Tuple[Optional[str], str]] = []
+    source_csv_path: Optional[Path] = None
 
     # Build prompts
     prompts_default = default_test_prompts()
 
-    if args.excel:
+    if args.csv_file:
+        source_csv_path = Path(args.csv_file)
+        prompts, prompt_metadata = read_prompts_from_csv(
+            source_csv_path,
+            id_col=args.csv_id_col,
+            text_col=args.csv_text_col,
+            category_col=args.csv_category_col,
+            subcategory_col=args.csv_subcategory_col,
+            target_col=args.csv_target_col,
+        )
+        prompts = cap_prompts(prompts, args.max_items)
+
+        voice_pairs = get_voice_matrix(args.voices, args.gender, args.speaker)
+        normal_cases = build_cases(
+            prompts,
+            args.model,
+            voice_pairs,
+            next_index,
+            "normal",
+            prompt_metadata=prompt_metadata,
+            source_name=f"csv:{source_csv_path.name}",
+        )
+        next_index += len(normal_cases)
+        phase_label = "normal/csv"
+        emit_cases_with_progress(client, normal_cases, requests, sleep_sec=0.01, label=phase_label)
+        client.wait_for_all([c.index for c in normal_cases], timeout_sec=args.timeout_sec, label=phase_label)
+
+    elif args.excel:
         xlsx = Path(args.excel)
         sheets = [args.excel_sheet] if args.excel_sheet else ["Male", "Female"]
         excel_prompts_by_sheet: Dict[str, List[Tuple[Optional[str], str]]] = {}
+        excel_meta_by_sheet: Dict[str, Dict[str, Dict[str, str]]] = {}
         for sh in sheets:
             excel_prompts_by_sheet[sh] = cap_prompts(read_texts_from_excel(xlsx, sh), args.max_items)
+            excel_meta_by_sheet[sh] = read_prompt_metadata_from_excel(xlsx, sh)
 
         # For Excel: if using both sheets, we bind Male sheet prompts to male, Female sheet prompts to female.
         # If voices=all4, we still run all 4 voices for BOTH sheets so you can compare voice differences on same prompts.
@@ -900,11 +1188,20 @@ def main():
                 else:
                     vp = voice_pairs
 
-            normal_cases = build_cases(prompts, args.model, vp, next_index, "normal")
+            normal_cases = build_cases(
+                prompts,
+                args.model,
+                vp,
+                next_index,
+                "normal",
+                prompt_metadata=excel_meta_by_sheet.get(sh),
+                source_name=f"excel:{sh}",
+            )
             next_index += len(normal_cases)
             phase_label = f"normal/{sh}"
             emit_cases_with_progress(client, normal_cases, requests, sleep_sec=0.01, label=phase_label)
             client.wait_for_all([c.index for c in normal_cases], timeout_sec=args.timeout_sec, label=phase_label)
+            prompt_metadata.update(excel_meta_by_sheet.get(sh, {}))
 
     elif args.text_file:
         prompts = read_texts_from_file(Path(args.text_file))
@@ -913,7 +1210,14 @@ def main():
         prompts = cap_prompts(prompts, args.max_items)
 
         voice_pairs = get_voice_matrix(args.voices, args.gender, args.speaker)
-        normal_cases = build_cases(prompts, args.model, voice_pairs, next_index, "normal")
+        normal_cases = build_cases(
+            prompts,
+            args.model,
+            voice_pairs,
+            next_index,
+            "normal",
+            source_name=f"text-file:{Path(args.text_file).name}",
+        )
         next_index += len(normal_cases)
         phase_label = "normal/text-file"
         emit_cases_with_progress(client, normal_cases, requests, sleep_sec=0.01, label=phase_label)
@@ -924,7 +1228,7 @@ def main():
         prompts = cap_prompts(prompts, args.max_items)
         voice_pairs = get_voice_matrix(args.voices, args.gender, args.speaker)
 
-        normal_cases = build_cases(prompts, args.model, voice_pairs, next_index, "normal")
+        normal_cases = build_cases(prompts, args.model, voice_pairs, next_index, "normal", source_name="default")
         next_index += len(normal_cases)
         phase_label = "normal/default-prompts"
         emit_cases_with_progress(client, normal_cases, requests, sleep_sec=0.01, label=phase_label)
@@ -984,8 +1288,21 @@ def main():
     # Write outputs
     jsonl_path, csv_path, _ = write_outputs(out_dir, requests, client.received, client.unexpected_responses)
     voice_summary_path = compute_voice_summary(csv_path, out_dir)
+    prompt_summary_path = compute_prompt_summary(csv_path, out_dir)
     summary_json = compute_summary_json(out_dir, requests, client, csv_path, reconnect_ok, burst_indices)
     report_md = write_markdown_report(out_dir, summary_json, voice_summary_path)
+
+    if args.materialize_eval_dir:
+        materialized_path = materialize_model_eval_dataset(
+            Path(args.materialize_eval_dir),
+            prompts,
+            prompt_metadata,
+            requests,
+            client.received,
+            out_dir,
+            source_csv_path,
+        )
+        print(f"- Materialized Eval: {materialized_path}")
 
     print("\nDONE")
     print(f"- Audio dir:     {audio_root}")
@@ -993,6 +1310,7 @@ def main():
     print(f"- Results JSONL: {jsonl_path}")
     print(f"- Summary JSON:  {summary_json}")
     print(f"- Voice CSV:     {voice_summary_path}")
+    print(f"- Prompt CSV:    {prompt_summary_path}")
     print(f"- Report MD:     {report_md}")
 
 

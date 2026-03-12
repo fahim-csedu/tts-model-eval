@@ -17,11 +17,15 @@ BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 # PROJECT_ROOT = os.path.join(BASE_DIR, '..') # Old structure
 PROJECT_ROOT = BASE_DIR # New structure: app and model_eval are in same dir
 
-EXCEL_FILE = os.path.join(PROJECT_ROOT, 'model_eval', 'Model Evaluation Results.xlsx')
-AUDIO_DIR = os.path.join(PROJECT_ROOT, 'model_eval', 'audio')
-ANNOTATION_DIR = os.path.join(PROJECT_ROOT, 'model_eval', 'annotations')
+DEFAULT_MODEL_EVAL_DIR = 'model_eval_v2' if os.path.exists(os.path.join(PROJECT_ROOT, 'model_eval_v2')) else 'model_eval'
+MODEL_EVAL_DIR = os.environ.get('MODEL_EVAL_DIR', DEFAULT_MODEL_EVAL_DIR)
+EXCEL_FILE = os.path.join(PROJECT_ROOT, MODEL_EVAL_DIR, 'Model Evaluation Results.xlsx')
+AUDIO_DIR = os.path.join(PROJECT_ROOT, MODEL_EVAL_DIR, 'audio')
+ANNOTATION_DIR = os.path.join(PROJECT_ROOT, MODEL_EVAL_DIR, 'annotations')
+SHARED_ANNOTATION_DIR = os.path.join(ANNOTATION_DIR, '_shared')
 
 print(f"Project Root: {PROJECT_ROOT}")
+print(f"Model Eval Dir: {MODEL_EVAL_DIR}")
 print(f"Excel Path: {EXCEL_FILE}")
 
 def get_excel_data():
@@ -31,6 +35,22 @@ def get_excel_data():
     except Exception as e:
         print(f"Error reading Excel: {e}")
         return None
+
+def is_multi_voice_dataset(xls=None):
+    workbook = xls if xls is not None else get_excel_data()
+    return bool(workbook and len(workbook.sheet_names) > 2)
+
+def get_primary_sheet_name(xls=None):
+    workbook = xls if xls is not None else get_excel_data()
+    if not workbook or not workbook.sheet_names:
+        return None
+    return workbook.sheet_names[0]
+
+def load_json_if_exists(path):
+    if not os.path.exists(path):
+        return {}
+    with open(path, 'r', encoding='utf-8') as f:
+        return json.load(f)
 
 def get_item_text(sheet_name, item_id, xls=None):
     try:
@@ -80,9 +100,9 @@ def normalize_token_errors(raw_token_errors):
             'token_index': token_index,
             'token': token,
             'error_category': str(entry.get('error_category', '')).strip(),
-            'severity': str(entry.get('severity', 'Moderate')).strip() or 'Moderate',
+            'severity': str(entry.get('severity', 'Critical')).strip() or 'Critical',
             'subsystem_guess': str(entry.get('subsystem_guess', 'Unknown')).strip() or 'Unknown',
-            'annotator_confidence': str(entry.get('annotator_confidence', '3')).strip() or '3',
+            'annotator_confidence': str(entry.get('annotator_confidence', '5')).strip() or '5',
         })
 
     normalized.sort(key=lambda item: (
@@ -106,6 +126,10 @@ def build_annotation_payload(sheet_name, item_id, annotation, xls=None):
     if text is not None:
         payload['Text'] = text
     return payload
+
+def get_shared_annotation_path(item_id):
+    os.makedirs(SHARED_ANNOTATION_DIR, exist_ok=True)
+    return os.path.join(SHARED_ANNOTATION_DIR, f"{item_id}.json")
 
 def resolve_peer_sheet(sheet_name, all_sheet_names):
     explicit_map = {
@@ -134,27 +158,80 @@ def index():
     xls = get_excel_data()
     if not xls:
         return "Error loading Excel file. Check console."
-    
-    # improved navigation: default to 'Atika - Male' and find first pending
-    target_sheet = 'Atika - Male'
-    if target_sheet not in xls.sheet_names:
-         # Fallback to first available if specific one not found
-         target_sheet = xls.sheet_names[0]
 
+    if is_multi_voice_dataset(xls):
+        items = get_shared_items(xls)
+        first_pending = next((item['id'] for item in items if item['status'] == 'Pending'), None)
+        first_ready = next((item['id'] for item in items if item['all_audio_available']), None)
+        target_id = first_pending if first_pending else first_ready if first_ready else items[0]['id']
+        return redirect(url_for('annotate_item', item_id=target_id))
+
+    target_sheet = xls.sheet_names[0]
     try:
         df = pd.read_excel(xls, sheet_name=target_sheet)
-    except:
+    except Exception:
         return f"Error reading sheet {target_sheet}"
 
     items = get_sheet_items(target_sheet, df)
-    
-    # Find first pending
-    first_pending = next((item['id'] for item in items if item['status'] == 'Pending'), None)
-    
-    # If no pending, go to first item
-    target_id = first_pending if first_pending else items[0]['id']
-    
+    first_pending = next((item['id'] for item in items if item['status'] == 'Pending' and item['audio_available']), None)
+    first_available = next((item['id'] for item in items if item['audio_available']), None)
+    target_id = first_pending if first_pending else first_available if first_available else items[0]['id']
     return redirect(url_for('annotate', sheet_name=target_sheet, item_id=target_id))
+
+def build_voice_entries(item_id, sheet_names):
+    entries = []
+    for sheet_name in sheet_names:
+        audio_path = os.path.join(AUDIO_DIR, sheet_name, f"{item_id}.wav")
+        entries.append({
+            'sheet_name': sheet_name,
+            'label': sheet_name,
+            'audio_available': os.path.exists(audio_path),
+            'audio_url': url_for('serve_audio', sheet_name=sheet_name, filename=f"{item_id}.wav"),
+        })
+    return entries
+
+def get_shared_items(xls=None):
+    workbook = xls if xls is not None else get_excel_data()
+    if workbook is None:
+        return []
+
+    base_sheet = get_primary_sheet_name(workbook)
+    df = pd.read_excel(workbook, sheet_name=base_sheet)
+    items = []
+
+    for _, row in df.iterrows():
+        item_id = str(row['ItemID'])
+        text = str(row['Text'])
+        voice_entries = build_voice_entries(item_id, workbook.sheet_names)
+        all_audio_available = all(entry['audio_available'] for entry in voice_entries)
+        shared_path = get_shared_annotation_path(item_id)
+
+        if os.path.exists(shared_path):
+            status = "Annotated"
+        elif all_audio_available:
+            status = "Pending"
+        else:
+            status = "Incomplete Audio"
+
+        items.append({
+            'id': item_id,
+            'text': text,
+            'status': status,
+            'all_audio_available': all_audio_available,
+        })
+
+    return items
+
+@app.route('/items')
+def list_items():
+    xls = get_excel_data()
+    if not xls:
+        return "Error."
+    if not is_multi_voice_dataset(xls):
+        return redirect(url_for('list_sheet', sheet_name=get_primary_sheet_name(xls)))
+
+    items = get_shared_items(xls)
+    return render_template('list.html', items=items, dataset_label=MODEL_EVAL_DIR, shared_mode=True)
 
 
 @app.route('/sheet/<sheet_name>')
@@ -162,6 +239,8 @@ def list_sheet(sheet_name):
     xls = get_excel_data()
     if not xls:
         return "Error."
+    if is_multi_voice_dataset(xls):
+        return redirect(url_for('list_items'))
     
     try:
         df = pd.read_excel(xls, sheet_name=sheet_name)
@@ -174,6 +253,7 @@ def list_sheet(sheet_name):
 def get_sheet_items(sheet_name, df):
     items = []
     sheet_annotation_dir = os.path.join(ANNOTATION_DIR, sheet_name)
+    sheet_audio_dir = os.path.join(AUDIO_DIR, sheet_name)
     os.makedirs(sheet_annotation_dir, exist_ok=True)
     
     for _, row in df.iterrows():
@@ -182,18 +262,72 @@ def get_sheet_items(sheet_name, df):
         
         # Check if JSON exists
         json_path = os.path.join(sheet_annotation_dir, f"{item_id}.json")
-        status = "Annotated" if os.path.exists(json_path) else "Pending"
+        audio_path = os.path.join(sheet_audio_dir, f"{item_id}.wav")
+        audio_available = os.path.exists(audio_path)
+        if not audio_available:
+            status = "Missing Audio"
+        else:
+            status = "Annotated" if os.path.exists(json_path) else "Pending"
         
         items.append({
             'id': item_id,
             'text': text,
-            'status': status
+            'status': status,
+            'audio_available': audio_available,
         })
     return items
+
+def get_item_navigation(items, item_id):
+    all_ids = [item['id'] for item in items]
+    try:
+        curr_idx = all_ids.index(item_id)
+        next_id = all_ids[curr_idx + 1] if curr_idx + 1 < len(all_ids) else None
+        prev_id = all_ids[curr_idx - 1] if curr_idx > 0 else None
+    except ValueError:
+        next_id = None
+        prev_id = None
+    return prev_id, next_id
+
+@app.route('/annotate/<item_id>')
+def annotate_item(item_id):
+    xls = get_excel_data()
+    if not xls:
+        return "Error."
+    if not is_multi_voice_dataset(xls):
+        primary_sheet = get_primary_sheet_name(xls)
+        return redirect(url_for('annotate', sheet_name=primary_sheet, item_id=item_id))
+
+    items = get_shared_items(xls)
+    base_sheet = get_primary_sheet_name(xls)
+    df = pd.read_excel(xls, sheet_name=base_sheet)
+    matches = df[df['ItemID'].astype(str) == item_id]
+    if matches.empty:
+        return "Item not found.", 404
+
+    row = matches.iloc[0]
+    existing_data = load_json_if_exists(get_shared_annotation_path(item_id))
+    prev_id, next_id = get_item_navigation(items, item_id)
+    voices = build_voice_entries(item_id, xls.sheet_names)
+
+    return render_template(
+        'annotate_shared.html',
+        item_id=item_id,
+        text=row['Text'],
+        category=row.get('Category', ''),
+        subcategory=row.get('Subcategory', ''),
+        target_feature=row.get('Target_Feature', ''),
+        voices=voices,
+        existing_data=existing_data,
+        items=items,
+        prev_id=prev_id,
+        next_id=next_id,
+    )
 
 @app.route('/annotate/<sheet_name>/<item_id>')
 def annotate(sheet_name, item_id):
     xls = get_excel_data()
+    if is_multi_voice_dataset(xls):
+        return redirect(url_for('annotate_item', item_id=item_id))
     df = pd.read_excel(xls, sheet_name=sheet_name)
     
     # Get all items for sidebar
@@ -202,6 +336,7 @@ def annotate(sheet_name, item_id):
     # Find the row
     row = df[df['ItemID'].astype(str) == item_id].iloc[0]
     text = row['Text']
+    primary_audio_available = os.path.exists(os.path.join(AUDIO_DIR, sheet_name, f"{item_id}.wav"))
     
     # Check if existing annotation
     json_path = os.path.join(ANNOTATION_DIR, sheet_name, f"{item_id}.json")
@@ -229,19 +364,37 @@ def annotate(sheet_name, item_id):
         if os.path.exists(peer_json_path):
             with open(peer_json_path, 'r', encoding='utf-8') as f:
                 peer_data = json.load(f)
+    peer_audio_available = bool(peer_sheet_name) and os.path.exists(os.path.join(AUDIO_DIR, peer_sheet_name, f"{item_id}.wav"))
 
     return render_template('annotate.html', 
                            sheet_name=sheet_name, 
                            item_id=item_id, 
                            text=text, 
                            existing_data=existing_data,
+                           primary_audio_available=primary_audio_available,
                            
                            peer_sheet_name=peer_sheet_name,
                            peer_data=peer_data,
+                           peer_audio_available=peer_audio_available,
 
                            next_id=next_id,
                            prev_id=prev_id,
                            items=items)
+
+@app.route('/api/save_shared', methods=['POST'])
+def save_shared_annotation():
+    data = request.json
+    item_id = data.get('item_id')
+    if not item_id:
+        return jsonify({'status': 'error', 'message': 'Missing item_id'}), 400
+
+    primary_sheet = get_primary_sheet_name()
+    annotation_payload = build_annotation_payload(primary_sheet, item_id, data.get('annotation'))
+    filepath = get_shared_annotation_path(item_id)
+    with open(filepath, 'w', encoding='utf-8') as f:
+        json.dump(annotation_payload, f, ensure_ascii=False, indent=4)
+
+    return jsonify({'status': 'success'})
 
 @app.route('/api/save', methods=['POST'])
 def save_annotation():

@@ -1,0 +1,301 @@
+﻿id,bucket,subcategory,prompt,target_failure
+CM001,CodeMix,common_noun,আজকের meeting টা কয়টায় শুরু হবে?,English noun mid-sentence
+CM002,CodeMix,common_noun,সকাল দশটার meeting-এ সবাই সময়মতো যোগ দাও।,Hyphenated English noun
+CM003,CodeMix,common_noun,কালকের briefing-এর আগে reportটা পড়ে নিও।,English noun with Bangla suffix
+CM004,CodeMix,common_noun,আজকে lunch break-এর পরে training হবে।,Two English tokens
+CM005,CodeMix,common_noun,নতুন policyটা HR team-কে explain করো।,English noun+verb
+CM006,CodeMix,common_noun,এই documentটা print করে desk-এ রেখে দাও।,English noun with command
+CM007,CodeMix,common_verb,ফাইলটা আমাকে send করে দাও।,English verb
+CM008,CodeMix,common_verb,তুমি updateটা tonight-এর মধ্যে share করবে?,English verbs and time word
+CM009,CodeMix,common_verb,ওকে reminderটা forward করে দাও।,English verb cluster
+CM010,CodeMix,common_verb,আজকের summaryটা review করে comment দিও।,English noun and verbs
+CM011,CodeMix,common_verb,ওরা issueটা resolve করতে পারেনি।,English technical verb
+CM012,CodeMix,common_verb,presentationটা finalize করে client-কে mail করো।,Multiple English verbs/nouns
+CM013,CodeMix,common_tech,Internet আজ খুব slow চলছে।,English adjectives in Bangla
+CM014,CodeMix,common_tech,serverটা restart না করলে login হবে না।,Tech words
+CM015,CodeMix,common_tech,আজ appটা বারবার crash করছে।,Tech term crash
+CM016,CodeMix,common_tech,browser refresh দিলেও pageটা load হচ্ছে না।,Multiple English tech words
+CM017,CodeMix,common_tech,"printer offline দেখাচ্ছে, cableটা check করো।",English mixed with Bangla
+CM018,CodeMix,common_tech,এই folderটা shared drive-এ upload করো।,English storage terms
+CM019,CodeMix,bangla_suffix,meetingটা শুরু হওয়ার আগে projectorটা on করো।,English roots with Bangla suffix
+CM020,CodeMix,bangla_suffix,fileগুলো একসাথে zip করে পাঠাও।,Plural suffix with English token
+CM021,CodeMix,bangla_suffix,reportটার শেষ pageটা missing আছে।,Bangla suffix on English words
+CM022,CodeMix,bangla_suffix,invoiceটা finance teamকে cc করে দাও।,cc token
+CM023,CodeMix,bangla_suffix,taskগুলো board-এ move করা হয়েছে।,English noun plural
+CM024,CodeMix,bangla_suffix,linkটা click করলে formটা open হবে।,English verb and noun
+CM025,CodeMix,sentence_initial,"Updateটা আগে দাও, তারপর আলোচনা করি।",Sentence-initial English token
+CM026,CodeMix,sentence_initial,Meeting শেষে আমাকে call দিও।,Sentence-initial English token
+CM027,CodeMix,sentence_initial,Budget draftটা আজই submit করতে হবে।,Sentence-initial English noun
+CM028,CodeMix,sentence_initial,Deadline মিস হলে পুরো planটাই পিছিয়ে যাবে।,Sentence-initial English noun
+CM029,CodeMix,sentence_final,আজকের আলোচনাটা ছিল খুব productive।,Sentence-final English adjective
+CM030,CodeMix,sentence_final,এই সমাধানটা আমার কাছে বেশ practical।,Sentence-final English adjective
+CM031,CodeMix,sentence_final,ওর ব্যাখ্যাটা মোটেও clear না।,Sentence-final English adjective
+CM032,CodeMix,sentence_final,এই designটা সত্যিই elegant।,Sentence-final English adjective
+CM033,CodeMix,acronym,আজ BRAC University-তে workshop আছে।,Uppercase acronym in name
+CM034,CodeMix,acronym,UNESCO-এর নতুন reportটা প্রকাশ হয়েছে।,Uppercase acronym with suffix
+CM035,CodeMix,acronym,NID update না করলে formটা submit হবে না।,Acronym mid-sentence
+CM036,CodeMix,acronym,OTP না দিলে payment complete হবে না।,Common acronym
+CM037,CodeMix,acronym,SSC আর HSC-এর result আজ বের হবে।,Two acronyms
+CM038,CodeMix,acronym,AI teamটা নতুন POC বানাচ্ছে।,Mixed acronyms
+CM039,CodeMix,alphanumeric,Wi-Fi 6 routerটা upstairs-এ বসানো আছে।,Hyphen and number
+CM040,CodeMix,alphanumeric,5G network পেলেও speedটা stable না।,Leading digit token
+CM041,CodeMix,alphanumeric,H2O filterটা kitchen-এ রাখা আছে।,Chemical alphanumeric
+CM042,CodeMix,alphanumeric,A/B test-এর দ্বিতীয় variantটা ভালো কাজ করেছে।,Slash token
+CM043,CodeMix,alphanumeric,4K videoটা mobile-এ smooth চলছে না।,Digit+letter token
+CM044,CodeMix,alphanumeric,Q2 target পূরণ করতে sales বাড়াতে হবে।,Quarter token
+CM045,CodeMix,brand_product,"Zoom না Google Meet, কোনটায় call হবে?",Brand names
+CM046,CodeMix,brand_product,"Slack-এ message দাও, email না।",Brand and common noun
+CM047,CodeMix,brand_product,GitHub issueটা Linear-এ sync হয়নি।,Brand names
+CM048,CodeMix,brand_product,Notion pageটা read-only করে দাও।,Brand token
+CM049,CodeMix,brand_product,Excel sheetটা PDF করে পাঠাও।,Common product names
+CM050,CodeMix,brand_product,ChatGPT দিয়ে draft বানিয়ে পরে edit করো।,Brand plus verbs
+TN001,Normalization,year,বাংলাদেশ ১৯৭১ সালে স্বাধীন হয়।,Year verbalization
+TN002,Normalization,year,আমাদের পরের লক্ষ্য ২০৩০ সালের মধ্যে পূরণ করতে হবে।,Future year verbalization
+TN003,Normalization,year,চুক্তিটা ২০০১ থেকে ২০০৫ পর্যন্ত কার্যকর ছিল।,Year range
+TN004,Normalization,year,"সে ১৯৯৯ সালে জন্মেছে, আর ২০২৪ সালে চাকরি পেয়েছে।",Two years mixed
+TN005,Normalization,date,সভাটা ১২/০৩/২০২৬ তারিখে অনুষ্ঠিত হবে।,Slash date
+TN006,Normalization,date,আমার পরীক্ষার তারিখ ০১-০৭-২০২৫।,Hyphenated date
+TN007,Normalization,date,ডেলিভারির সময় 05-11-2026-এর আগে না।,ASCII digits date
+TN008,Normalization,date,"আজ ২১শে ফেব্রুয়ারি ২০২৬, সবাই প্রস্তুত তো?",Ordinal date
+TN009,Normalization,time,ট্রেনটা সকাল ১০:৩০-এ ছাড়বে।,Colon time
+TN010,Normalization,time,ওষুধটা রাত ০৮:১৫-এ খেতে হবে।,Leading zero time
+TN011,Normalization,time,আমাদের call হবে 07:05 pm-এ।,ASCII time with pm
+TN012,Normalization,time,ঘড়িতে এখন ১২:০০ বাজে।,Exact hour time
+TN013,Normalization,phone,আমার নম্বর ০১৭১১-০০০০০০।,Phone number with dash
+TN014,Normalization,phone,অফিসে যোগাযোগ করুন +৮৮০১৭১২-৩৪৫৬৭৮ নম্বরে।,Country code phone
+TN015,Normalization,phone,হেল্পলাইন ১৬২৬৩ নম্বরে কল করুন।,Short service number
+TN016,Normalization,phone,"OTP হলো ৪৯২৮৬১, কাউকে বলবেন না।",Six-digit OTP
+TN017,Normalization,currency,এই বইটার দাম ৳৩৫০।,Bangla taka symbol
+TN018,Normalization,currency,"মোট বিল হয়েছে ৳১,২৫০.৫০।",Comma and decimal money
+TN019,Normalization,currency,আজ ডলার রেট ছিল $25 না $30?,Dollar amounts
+TN020,Normalization,currency,ইউরোতে হিসাব করলে মোট €৪৫.৭৫ হয়।,Euro symbol with decimal
+TN021,Normalization,percentage,গত মাসে বিক্রি ১২.৫% বেড়েছে।,Percentage decimal
+TN022,Normalization,percentage,ত্রুটির হার ০.০৫% এর নিচে রাখতে হবে।,Small percentage
+TN023,Normalization,percentage,উপস্থিতি ৯৮% না হলে সনদ মিলবে না।,Integer percentage
+TN024,Normalization,fraction_decimal,"আমি আধা কেজি না, ০.৫ কেজি চিনি চাই।",Decimal quantity
+TN025,Normalization,fraction_decimal,রিপোর্টে ৩.১৪ মানটা ঠিক করে লেখো।,Pi-style decimal
+TN026,Normalization,fraction_decimal,আজ ১/২ লিটার দুধ আর ১/৪ কেজি চা লাগবে।,Fraction slash
+TN027,Normalization,fraction_decimal,ঋণের সুদ ২.৭৫% ধরা হয়েছে।,Percentage decimal
+TN028,Normalization,range,ক্লাসে আজ ৫-১০ জন ছাত্র অনুপস্থিত।,Numeric range
+TN029,Normalization,range,শিশুদের বয়স ৮–১২ বছরের মধ্যে।,En dash range
+TN030,Normalization,range,তাপমাত্রা ২৫-৩০° সেলসিয়াসের মধ্যে থাকবে।,Range with degree
+TN031,Normalization,math,যোগফল: ১০ + ৫ = ১৫।,Plus and equals
+TN032,Normalization,math,"১২ - ৭ = ৫, এটা খুব সহজ।",Minus operator
+TN033,Normalization,math,৬ × ৪ = ২৪ লিখে দাও।,Multiplication symbol
+TN034,Normalization,math,২০ ÷ ৫ = ৪ হবে।,Division symbol
+TN035,Normalization,math,"যদি x < y হয়, তবে y বড়।",Less-than sign
+TN036,Normalization,math,a >= b হলে প্রথম শর্ত পূরণ হবে।,Greater-equal ASCII symbols
+TN037,Normalization,unit,আজ তাপমাত্রা ৩২°C।,Degree Celsius
+TN038,Normalization,unit,গাড়িটা ৬০ km/h বেগে চলছিল।,Speed unit
+TN039,Normalization,unit,প্যাকেটের ওজন ১.২৫ kg।,Weight unit
+TN040,Normalization,unit,এই বোতলে ৭৫০ ml পানি আছে।,Milliliter unit
+TN041,Normalization,unit,রুমটা ১২ ft × ১০ ft।,Feet unit with multiplication
+TN042,Normalization,ordinal,সে পরীক্ষায় ১ম হয়েছে।,Ordinal 1st
+TN043,Normalization,ordinal,আজ আমাদের ২১তম বৈঠক।,Ordinal 21st
+TN044,Normalization,ordinal,এটা ২য় অধ্যায়ের ৩য় অনুচ্ছেদ।,Multiple ordinals
+TN045,Normalization,serial_id,চালান নম্বর INV-2026-017 ঠিক আছে কি?,Serial with hyphen
+TN046,Normalization,serial_id,ফাইল কোড A-12/B-7 আলাদা করে রাখো।,Mixed serial code
+TN047,Normalization,serial_id,"বাসা ১২/বি, রোড ৭, ব্লক সি।",Address-like structured token
+TN048,Normalization,measurement,রক্তচাপ ছিল ১২০/৮০।,Ratio-style measurement
+TN049,Normalization,measurement,স্কোরলাইন ৩:২ হলেও খেলা দারুণ ছিল।,Colon numeric ratio
+TN050,Normalization,measurement,"দূরত্ব প্রায় ২.৩ কিমি, সময় লাগবে ১৫ মিনিট।",Decimal plus unit
+GP001,G2P_Conjunct,conjunct,বিজ্ঞান ক্লাসে আজ নতুন অধ্যায় শুরু হবে।,জ্ঞ conjunct
+GP002,G2P_Conjunct,conjunct,প্রজ্ঞার সাথে ধৈর্যও দরকার।,জ্ঞ conjunct in initial cluster
+GP003,G2P_Conjunct,conjunct,সংজ্ঞাটা ধীরে আর স্পষ্ট করে পড়ো।,জ্ঞ cluster medial
+GP004,G2P_Conjunct,conjunct,অজ্ঞাত কারণেই ফাইলটা বন্ধ ছিল।,জ্ঞ cluster word-initial syllable
+GP005,G2P_Conjunct,conjunct,লক্ষ্মীর ভাণ্ডারে প্রদীপ জ্বলছিল।,ক্ষ্ম conjunct
+GP006,G2P_Conjunct,conjunct,তীক্ষ্ণ মন্তব্যের পর সবাই চুপ হয়ে গেল।,ক্ষ্ণ conjunct
+GP007,G2P_Conjunct,conjunct,রাক্ষসের গল্প শুনে শিশুরা ভয় পেল।,ক্ষ cluster
+GP008,G2P_Conjunct,conjunct,ক্ষুদ্র ভুলটাও এখানে গুরুত্বপূর্ণ।,ক্ষ word-initial
+GP009,G2P_Conjunct,conjunct,ব্রাহ্মণবাড়িয়া থেকে আজ সকালে ট্রেন এসেছে।,হ্ম conjunct in place name
+GP010,G2P_Conjunct,conjunct,ব্রহ্মপুত্রের পানি এবার অনেক বেড়েছে।,হ্ম/ব্রহ্ম cluster
+GP011,G2P_Conjunct,conjunct,শ্রদ্ধাভরে শিক্ষককে অভিবাদন জানাও।,শ্র cluster
+GP012,G2P_Conjunct,conjunct,শ্রোতারা ধৈর্য ধরে পুরো অনুষ্ঠান শুনলেন।,শ্র initial cluster
+GP013,G2P_Conjunct,conjunct,রাষ্ট্রভাষা আন্দোলনের ইতিহাস সবাই জানে।,ষ্ট্র cluster
+GP014,G2P_Conjunct,conjunct,কর্তৃপক্ষ দ্রুত সিদ্ধান্ত জানাবে।,র্তৃপক্ষ complex cluster
+GP015,G2P_Conjunct,conjunct,দৃষ্টিভঙ্গি বদলালে সমস্যাটা সহজ লাগে।,দৃষ্ট cluster
+GP016,G2P_Conjunct,conjunct,অন্তর্দৃষ্টি ছাড়া এই কাজ করা কঠিন।,ন্তর্দৃষ্ট cluster
+GP017,G2P_Conjunct,conjunct,সংশ্লিষ্ট নথিগুলো আলাদা ফাইলে রাখো।,সংশ্লি cluster
+GP018,G2P_Conjunct,conjunct,উৎসর্গপত্রের শেষ লাইনটা পড়ে শোনাও।,ৎসর্গ cluster
+GP019,G2P_Conjunct,conjunct,স্মৃতিগুলো এখনো খুব পরিষ্কার মনে আছে।,স্মৃতি cluster
+GP020,G2P_Conjunct,conjunct,স্বপ্নভঙ্গের পরও সে হাল ছাড়েনি।,স্বপ্ন cluster
+GP021,G2P_Conjunct,conjunct,স্নিগ্ধ হাওয়ায় সকালটা সুন্দর লাগছিল।,স্নি cluster
+GP022,G2P_Conjunct,conjunct,স্ফূর্তি ফিরে এলে কাজও এগোয়।,স্ফূ cluster
+GP023,G2P_Conjunct,conjunct,দ্বিধা না করে সিদ্ধান্তটা জানাও।,দ্ব cluster
+GP024,G2P_Conjunct,conjunct,দ্বন্দ্ব মিটলে আলোচনা সহজ হবে।,দ্বন্দ্ব cluster
+GP025,G2P_Conjunct,conjunct,হ্রদের পাড়ে বিকেলে হাঁটতে ভালো লাগে।,হ্র initial cluster
+GP026,G2P_Conjunct,phola,ক্রমশ চাপটা বাড়ছে।,র-ফলা/ক্রমশ
+GP027,G2P_Conjunct,phola,ত্রাণ সামগ্রী দুপুরের আগেই পৌঁছেছে।,ত্র cluster
+GP028,G2P_Conjunct,phola,গ্রন্থাগারে আজ নতুন বই এসেছে।,গ্র cluster
+GP029,G2P_Conjunct,phola,শস্যভাণ্ডার দ্রুত খালি হয়ে যাচ্ছে।,স্য/ণ্ডার cluster
+GP030,G2P_Conjunct,phola,ম্লান আলোয় রাস্তা চিনতে কষ্ট হচ্ছিল।,ম্ল initial cluster
+GP031,G2P_Conjunct,phola,প্লাবনের পানি এখনো নামেনি।,প্ল initial cluster
+GP032,G2P_Conjunct,phola,স্রোতের টানে নৌকাটা সরে গেল।,স্র initial cluster
+GP033,G2P_Conjunct,phola,ক্লান্ত চোখে সে চিঠিটা পড়ছিল।,ক্ল initial cluster
+GP034,G2P_Conjunct,phola,গ্লানি ভুলে নতুন করে শুরু করো।,গ্ল initial cluster
+GP035,G2P_Conjunct,phola,দ্রুত উত্তর না দিলে দেরি হয়ে যাবে।,দ্র initial cluster
+GP036,G2P_Conjunct,aspiration,কাল খালার কলার ঝুড়ি খোলা ছিল।,ক/খ contrast
+GP037,G2P_Conjunct,aspiration,গরম ঘি দিয়ে ঘন খিচুড়ি বানাও।,গ/ঘ contrast
+GP038,G2P_Conjunct,aspiration,ডাল আর ঢেঁড়স দুটোই বাজার থেকে আনো।,ড/ঢ contrast
+GP039,G2P_Conjunct,aspiration,তালা খুলে থালা ধুয়ে রাখো।,ত/থ/ধ contrast
+GP040,G2P_Conjunct,aspiration,বাবা ভোরে ভাঙা ভেলা মেরামত করলেন।,ব/ভ contrast
+GP041,G2P_Conjunct,vowel,"এখন যা করো, পরে যেন কোরো না।",করো/কোরো contrast
+GP042,G2P_Conjunct,vowel,"সে করছে না, কিন্তু করে ফেলেছে।",করছে vs করে
+GP043,G2P_Conjunct,vowel,পড়ে গিয়ে সে আবার উঠে দাঁড়াল।,ড়ে sequence
+GP044,G2P_Conjunct,abbreviation,ডা. রহমান আজ বিকেলে রোগী দেখবেন।,Honorific abbreviation
+GP045,G2P_Conjunct,abbreviation,মি. করিম এখন মিটিংয়ে আছেন।,English honorific abbreviation
+GP046,G2P_Conjunct,abbreviation,মো. রফিকুল ইসলামের ফর্ম জমা হয়েছে।,Bangla abbreviation মো.
+GP047,G2P_Conjunct,abbreviation,নং ১২ কক্ষটা আজ বন্ধ থাকবে।,নং expansion
+GP048,G2P_Conjunct,abbreviation,জনাব মো. হাসানকে ভেতরে ডাকুন।,Multiple abbreviations
+GP049,G2P_Conjunct,abbreviation,ড. শারমিন আজকের বক্তা।,Doctor abbreviation
+GP050,G2P_Conjunct,abbreviation,"রোড নং ৭, বাড়ি নং ১২, ব্লক সি।",Repeated abbreviation expansion
+PR001,Prosody,statement_vs_question,তুমি আজ অফিসে যাবে।,Declarative contour
+PR002,Prosody,statement_vs_question,তুমি আজ অফিসে যাবে?,Yes/no question contour
+PR003,Prosody,statement_vs_question,ওরা এখনই ফিরবে।,Declarative contour
+PR004,Prosody,statement_vs_question,ওরা এখনই ফিরবে?,Yes/no question contour
+PR005,Prosody,statement_vs_question,তুমি কাজটা শেষ করেছ।,Declarative contour
+PR006,Prosody,statement_vs_question,তুমি কাজটা শেষ করেছ?,Yes/no question contour
+PR007,Prosody,statement_vs_question,এটাই তোমার শেষ সিদ্ধান্ত।,Declarative contour
+PR008,Prosody,statement_vs_question,এটাই তোমার শেষ সিদ্ধান্ত?,Yes/no question contour
+PR009,Prosody,statement_vs_question,রিমি আজ আসবে।,Declarative contour
+PR010,Prosody,statement_vs_question,রিমি আজ আসবে?,Yes/no question contour
+PR011,Prosody,statement_vs_question,তুমি আমাকে ডাকলে।,Declarative contour
+PR012,Prosody,statement_vs_question,তুমি আমাকে ডাকলে?,Yes/no question contour
+PR013,Prosody,statement_vs_question,সে টাকা জমা দিয়েছে।,Declarative contour
+PR014,Prosody,statement_vs_question,সে টাকা জমা দিয়েছে?,Yes/no question contour
+PR015,Prosody,tag_question,তুমি কাল আসবে না।,Negative statement contour
+PR016,Prosody,tag_question,"তুমি কাল আসবে, না?",Tag question contour
+PR017,Prosody,alternative_question,ওটা লাল না নীল।,Plain alternative statement
+PR018,Prosody,alternative_question,"ওটা লাল, না নীল?",Alternative question contour
+PR019,Prosody,tag_question,আজকের রিপোর্ট তৈরি হয়েছে।,Declarative contour
+PR020,Prosody,tag_question,"আজকের রিপোর্ট তৈরি হয়েছে, তাই তো?",Confirmation-seeking contour
+PR021,Prosody,exclamation,এখনই দরজা খোলো।,Command neutral
+PR022,Prosody,exclamation,এখনই দরজা খোলো!,Command emphatic
+PR023,Prosody,exclamation,কি সুন্দর সকাল।,Flat statement
+PR024,Prosody,exclamation,কি সুন্দর সকাল!,Exclamatory contour
+PR025,Prosody,exclamation,তাড়াতাড়ি নেমে এসো।,Request neutral
+PR026,Prosody,exclamation,তাড়াতাড়ি নেমে এসো!,Urgent imperative
+PR027,Prosody,exclamation,আজ আমরা জিতেছি।,Statement neutral
+PR028,Prosody,exclamation,আজ আমরা জিতেছি!,Excited exclamation
+PR029,Prosody,exclamation,তুমি সত্যিই দারুণ করেছ।,Praise neutral
+PR030,Prosody,exclamation,তুমি সত্যিই দারুণ করেছ!,Praise emphatic
+PR031,Prosody,vocative,"শিলা, তুমি আগে বলো।",Vocative comma
+PR032,Prosody,vocative,শিলা তুমি আগে বলো।,No comma vocative
+PR033,Prosody,list,"আমি চা, কফি, আর পানি আনলাম।",Listed items with commas
+PR034,Prosody,list,আমি চা কফি আর পানি আনলাম।,List without commas
+PR035,Prosody,clause_boundary,"তুমি এলে, ভালো লাগবে।",Clause boundary with comma
+PR036,Prosody,clause_boundary,তুমি এলে ভালো লাগবে।,Clause boundary without comma
+PR037,Prosody,clause_boundary,"ও যদি আসে, আমরা শুরু করব।",Conditional clause boundary
+PR038,Prosody,clause_boundary,ও যদি আসে আমরা শুরু করব।,Conditional without comma
+PR039,Prosody,contrastive_pause,"এই বইটা নয়, ওই বইটা দাও।",Contrastive pause
+PR040,Prosody,contrastive_pause,এই বইটা নয় ওই বইটা দাও।,Contrastive without comma
+PR041,Prosody,quotation,"সে বলল, “আমি আজই ফিরব।”",Quoted speech with comma
+PR042,Prosody,quotation,সে বলল “আমি আজই ফিরব”।,Quoted speech without comma
+PR043,Prosody,hesitation,আমি ভাবছিলাম... আজই যাই।,Hesitation ellipsis
+PR044,Prosody,hesitation,"আমি ভাবছিলাম, আজই যাই।",Simple clause pause
+PR045,Prosody,choice_grouping,"আজ, না কাল, সিদ্ধান্ত নাও।",Grouped alternatives
+PR046,Prosody,choice_grouping,আজ না কাল সিদ্ধান্ত নাও।,Ungrouped alternatives
+PR047,Prosody,dash,এই কাজটা তুমি করবে—আমি না।,Dash for contrastive focus
+PR048,Prosody,dash,"এই কাজটা তুমি করবে, আমি না।",Comma for contrastive focus
+PR049,Prosody,parenthetical,রাহাত (আমার ভাই) আজ আসবে।,Parenthetical insertion
+PR050,Prosody,parenthetical,"রাহাত, আমার ভাই, আজ আসবে।",Appositive commas
+NE001,NamedEntity_Structured,bangla_entity,আজ আমরা কক্সবাজার থেকে সেন্ট মার্টিনে যাব।,Bangla place names
+NE002,NamedEntity_Structured,bangla_entity,শাহজালাল আন্তর্জাতিক বিমানবন্দর থেকে ফ্লাইট ছাড়বে।,Long institutional name
+NE003,NamedEntity_Structured,bangla_entity,ময়মনসিংহ মেডিকেল কলেজে ভর্তি পরীক্ষা হবে।,Complex Bangla institution name
+NE004,NamedEntity_Structured,bangla_entity,নওগাঁর নিয়ামতপুরে নতুন প্রকল্প শুরু হয়েছে।,Less-common Bangla place name
+NE005,NamedEntity_Structured,bangla_entity,সৈয়দ ওয়ালীউল্লাহর গল্পটা আবার পড়ো।,Proper name with uncommon phonotactics
+NE006,NamedEntity_Structured,bangla_entity,ড. মুহম্মদ শহীদুল্লাহর বক্তৃতা আজ পড়েছি।,Scholarly proper name
+NE007,NamedEntity_Structured,bangla_entity,কিশোরগঞ্জের ইটনায় এবার পানি বেড়েছে।,Regional place names
+NE008,NamedEntity_Structured,bangla_entity,চাঁদপুরের হাজীগঞ্জে মেলা বসেছে।,Nasalized/aspirated names
+NE009,NamedEntity_Structured,bangla_entity,সুনামগঞ্জের তাহিরপুর খুব সুন্দর জায়গা।,Compound place name
+NE010,NamedEntity_Structured,bangla_entity,বরিশালের উজিরপুরে আজ বৃষ্টি হয়েছে।,Bangla proper noun sequence
+NE011,NamedEntity_Structured,foreign_translit,ক্রিস্টোফার নোলানের নতুন ছবিটা দেখেছ?,Foreign person in Bangla script
+NE012,NamedEntity_Structured,foreign_translit,ইস্তাম্বুল থেকে দোহা হয়ে ঢাকা ফিরব।,Foreign city names in Bangla script
+NE013,NamedEntity_Structured,foreign_translit,বার্সেলোনা আর সেভিয়া আজ ম্যাচ খেলবে।,Foreign team/city names
+NE014,NamedEntity_Structured,foreign_translit,ফিওদর দস্তয়েভস্কির উপন্যাসটা কঠিন লাগে।,Foreign literary name
+NE015,NamedEntity_Structured,foreign_translit,ম্যাক্স প্ল্যাঙ্ক ইনস্টিটিউটের গবেষণাটা পড়েছি।,Foreign institute transliteration
+NE016,NamedEntity_Structured,foreign_translit,আন্তোনিও গুতেরেসের বক্তব্য সবাই শুনেছে।,Foreign person name
+NE017,NamedEntity_Structured,foreign_translit,লিওনার্দো দা ভিঞ্চির কাজ নিয়ে আলোচনা হলো।,Multiword foreign name
+NE018,NamedEntity_Structured,foreign_translit,রেইকিয়াভিকের আবহাওয়া নাকি খুব ঠান্ডা।,Rare foreign place name
+NE019,NamedEntity_Structured,foreign_translit,কুয়ালালামপুর হয়ে সিঙ্গাপুর যাওয়ার পরিকল্পনা আছে।,Sequential foreign places
+NE020,NamedEntity_Structured,foreign_translit,জোহানেসবার্গ থেকে কেপ টাউন যাওয়ার ফ্লাইট ধরো।,Foreign city pair
+NE021,NamedEntity_Structured,acronym_entity,WHO-এর নতুন নির্দেশনা আজ এসেছে।,Uppercase acronym with suffix
+NE022,NamedEntity_Structured,acronym_entity,UNDP Bangladesh-এর প্রতিনিধি বিকেলে আসবেন।,Acronym plus English word
+NE023,NamedEntity_Structured,acronym_entity,BSEC-এর বিজ্ঞপ্তি এখনো প্রকাশ হয়নি।,Financial acronym
+NE024,NamedEntity_Structured,acronym_entity,NASA-এর ছবিগুলো সত্যিই দারুণ।,Uppercase acronym
+NE025,NamedEntity_Structured,acronym_entity,"ICDDR,B-এ নতুন গবেষণা চলছে।",Punctuation inside acronym
+NE026,NamedEntity_Structured,acronym_entity,"BUET, DU, আর SUST-এর শিক্ষার্থীরা অংশ নেবে।",Multiple acronyms with commas
+NE027,NamedEntity_Structured,acronym_entity,BRTC বাসটা আজ দেরি করেছে।,Acronym + Bangla noun
+NE028,NamedEntity_Structured,acronym_entity,DBBL অ্যাপটা আজ কাজ করছে না।,Acronym + Bangla translit
+NE029,NamedEntity_Structured,acronym_entity,BRTA অফিসে গিয়ে লাইসেন্সের কাগজ জমা দাও।,Acronym + office
+NE030,NamedEntity_Structured,acronym_entity,BTV আর NTV দুটোতেই খবর দেখানো হয়েছে।,Parallel acronyms
+NE031,NamedEntity_Structured,email_url,আমার ইমেইল fahim.arefin@pareto.ai।,Email address
+NE032,NamedEntity_Structured,email_url,ওয়েবসাইটটা হলো www.pareto.ai/blog/tts।,Web URL
+NE033,NamedEntity_Structured,email_url,ডকুমেন্টটা https://example.com/Report-2026.pdf লিংকে আছে।,Full URL with mixed case
+NE034,NamedEntity_Structured,email_url,আমাকে @fahim_arefin-এ মেসেজ দিও।,Handle with @
+NE035,NamedEntity_Structured,email_url,ফোল্ডারটা D:\Audio\Bangla\Final-এ আছে।,Windows path
+NE036,NamedEntity_Structured,email_url,"সার্ভার আইপি 192.168.1.17, এটা নোট করো।",IP address
+NE037,NamedEntity_Structured,email_url,"লোকেশন কোঅর্ডিনেট 23.8103, 90.4125।",GPS coordinates
+NE038,NamedEntity_Structured,email_url,"পাসওয়ার্ডটি Rahim@1234 নয়, Karim#2026।",Password-like tokens
+NE039,NamedEntity_Structured,email_url,ট্র্যাকিং লিংকটা bit.ly/tts-demo এ আছে।,Short URL
+NE040,NamedEntity_Structured,email_url,রুম কোড ZM-408-B আমাকে পাঠাও।,Code-like token
+NE041,NamedEntity_Structured,address_id,"বাসা ১২/বি, রোড ৭/এ, ধানমন্ডি, ঢাকা।",Structured address
+NE042,NamedEntity_Structured,address_id,ফ্লাইট BG-148 ঢাকা থেকে সিলেট যাবে।,Flight code
+NE043,NamedEntity_Structured,address_id,ট্রেন সুবর্ণ এক্সপ্রেস ৭০২ নম্বর প্ল্যাটফর্মে আসবে।,Train + number
+NE044,NamedEntity_Structured,address_id,জাতীয় পরিচয়পত্র নম্বর ১৯৮৭৬৫৪৩২১০ লিখে দাও।,Long ID number
+NE045,NamedEntity_Structured,address_id,MRP পাসপোর্ট নম্বর A01234567 যাচাই করো।,Passport-like mixed token
+NE046,NamedEntity_Structured,address_id,মেডিসিনটা হলো Napa Extend 665 mg।,Brand + dosage
+NE047,NamedEntity_Structured,address_id,প্রোডাক্ট কোড XR-12 Pro কাল বাজারে আসছে।,Product code + word
+NE048,NamedEntity_Structured,address_id,রাউটার মডেল Archer C6 ঠিকমতো চলছে।,Model name
+NE049,NamedEntity_Structured,address_id,চ্যানেল 24 আর ATN News দুটোই দেখেছি।,Mixed numeric media name
+NE050,NamedEntity_Structured,address_id,ফাইলের নাম Final_Version_v2.3.docx বদলাও।,Filename token
+LF001,LongForm_Task,workflow,"আগামীকাল সকাল ১০:৩০-এ BRAC University-এর সেমিনারে যাওয়ার আগে presentationটা PDF করে email-এ পাঠিয়ে দিও, না হলে registration ডেস্কে সমস্যা হবে।","Long workflow with code-mix, time, entity"
+LF002,LongForm_Task,workflow,"তুমি অফিসে পৌঁছে প্রথমে attendance দেবে, তারপর meeting room-এ গিয়ে projector, mic, আর backup laptop ঠিক আছে কি না দেখে নিও।",Instruction chain with code-mix
+LF003,LongForm_Task,workflow,"আজকের shipment-এর invoice নম্বর INV-2026-017, এটা finance team-কে forward করে vendor payment release করতে বলো।",Serial code plus code-mix
+LF004,LongForm_Task,workflow,"ডাক্তার বলেছেন, Napa Extend 665 mg দুপুর ২টায় খেতে হবে, কিন্তু খাওয়ার আগে ৩০ মিনিট কিছু খাওয়া যাবে না।",Medicine brand + dosage
+LF005,LongForm_Task,workflow,"আমার নতুন ঠিকানা বাসা ১২/বি, রোড ৭/এ, ধানমন্ডি, ঢাকা; ভুলে পুরোনো বাসায় কুরিয়ার পাঠিও না।",Address with punctuation
+LF006,LongForm_Task,workflow,"ও বলল, “আজই reportটা submit করো”, কিন্তু আমি ভাবছিলাম, data validation শেষ না হলে final version পাঠানো ঠিক হবে না।",Quote + code-mix + clause prosody
+LF007,LongForm_Task,workflow,"শাহজালাল আন্তর্জাতিক বিমানবন্দর থেকে BG-148 ফ্লাইটটা রাত ৮:১৫-এ ছাড়বে, তাই বিকেল ৫টার মধ্যে সবাই check-in করে ফেলো।",Entity + flight code + time
+LF008,LongForm_Task,workflow,"১৯৭১ থেকে ২০২৬ পর্যন্ত দেশের ইতিহাস নিয়ে যে exhibitionটা হচ্ছে, সেখানে audio guide-এ বাংলা আর English দুটো ভাষাই থাকবে।",Year range + code-mix
+LF009,LongForm_Task,workflow,"যদি Wi-Fi 6 routerটা reboot করার পরও Internet slow থাকে, তাহলে service center-এ ticket খুলে issueটা escalate করো।",Alphanumeric + multiple tech words
+LF010,LongForm_Task,workflow,"আজ চা, কফি, পানি, biscuits, আর projector screen—সবকিছুই auditorium-এ পৌঁছাতে হবে, কারণ বিকেল ৪টায় event শুরু।",List + dash + time
+LF011,LongForm_Task,narrative,"রাহাত, আমার ভাই, কাল কক্সবাজার থেকে সেন্ট মার্টিনে যাবে, কিন্তু আবহাওয়া খারাপ হলে সে হয়তো দুপুরের launchটা মিস করবে।",Appositive + place names + code-mix
+LF012,LongForm_Task,narrative,"UNDP Bangladesh-এর প্রতিনিধি, WHO-এর উপদেষ্টা, আর BRTA-র চেয়ারম্যান একই মঞ্চে থাকবেন, তাই pronunciation ভুল হলে announcementটা অস্বস্তিকর শোনাবে।",Multiple acronyms and English nouns
+LF013,LongForm_Task,narrative,"তুমি যদি আজ না এসে কাল আসো, না হলে অন্তত online-এ join করো, তাহলে আলোচনাটা একেবারে থেমে থাকবে না।",Alternative structure + code-mix
+LF014,LongForm_Task,narrative,"ব্রাহ্মণবাড়িয়া থেকে আসা অতিথিদের জন্য ৫-১০ জনের বসার ব্যবস্থা, ২৫০ ml পানির বোতল, আর নামফলক আলাদা করে রাখো।",Conjunct place name + range + unit
+LF015,LongForm_Task,narrative,"সে ধীরে বলল, “আমি এখনই ফিরছি না”, তারপর আর কিছু না বলে জানালার দিকে তাকিয়ে রইল।",Quoted speech + pause
+LF016,LongForm_Task,narrative,"সার্ভার আইপি 192.168.1.17 বদলে 192.168.1.18 করতে হবে, কিন্তু database backup না নিয়ে এই কাজ কোরো না।",IP address + code-mix
+LF017,LongForm_Task,narrative,"আজকের scoreline ৩:২ হলেও কোচ বললেন, “শেষ দশ মিনিটে আমাদের rhythm একদম ভেঙে গিয়েছিল।”",Scoreline + quote
+LF018,LongForm_Task,narrative,"আমি ভাবছিলাম... আজই কি proposalটা submit করব, নাকি Q2 review-এর পর final revision দেব?",Ellipsis + code-mix + question
+LF019,LongForm_Task,narrative,"কর্তৃপক্ষ জানিয়েছে, ১২/০৩/২০২৬ থেকে ১৫/০৩/২০২৬ পর্যন্ত রাস্তার একাংশ মেরামতের জন্য বন্ধ থাকবে।",Date range
+LF020,LongForm_Task,narrative,"লক্ষ্মীপূজার প্রস্তুতিতে প্রদীপ, ফুল, ফল, আর প্রসাদের তালিকা আলাদা করে লিখে দরজার পাশে টাঙিয়ে দাও।",Conjunct entity + list
+LF021,LongForm_Task,functional,"মি. করিম বললেন যে নং ১২ কক্ষের projector নষ্ট, তাই সভাটা ২য় তলার room B-তে সরিয়ে নেওয়া হবে।",Abbreviations + ordinals + room code
+LF022,LongForm_Task,functional,"ফিওদর দস্তয়েভস্কির উপন্যাস নিয়ে আজকের lectureটা খুব dense ছিল, তবু studentরা surprisingly attentive ছিল।",Foreign name + code-mix adjectives
+LF023,LongForm_Task,functional,"যদি ECG reportটা mail না আসে, তাহলে lab-এ call করে patient ID 458721 উল্লেখ করবে।",Medical acronym + serial number
+LF024,LongForm_Task,functional,"আজ ৩২°C তাপমাত্রায়ও মাঠে কাজ করতে হয়েছে, তাই ২ লিটার পানি আর ORS খেতে ভুলবে না।",Temperature + quantity + acronym
+LF025,LongForm_Task,functional,"ওটা লাল, না নীল, না একেবারেই সবুজ—আমি ঠিক বুঝতে পারিনি, কারণ আলোটা খুব ম্লান ছিল।",Alternative grouping + dash
+LF026,LongForm_Task,functional,"চালান নম্বর A-12/B-7, warehouse code ZM-408-B, আর delivery slot 07:05 pm—এই তিনটা তথ্য ঠিক আছে কি না মিলিয়ে দেখো।",Multiple structured tokens
+LF027,LongForm_Task,functional,"কক্সবাজারের হোটেল বুকিং, সেন্ট মার্টিনের launch ticket, আর ফেরার flight confirmation—সবকিছু এক ফোল্ডারে save করো।",List with mixed tokens
+LF028,LongForm_Task,functional,ড. শারমিন আজ বললেন যে Bengali prosody-তে phrase break ভুল হলে বাক্যটা বোঝা গেলেও তা মানবসদৃশ শোনায় না।,Abbreviation + technical terms
+LF029,LongForm_Task,functional,"আজকের meeting-এ agenda ছিল budget revision, vendor onboarding, AI roadmap, আর customer support backlog—কিন্তু সময় শেষ হয়ে গেছে।",Meeting jargon list
+LF030,LongForm_Task,functional,"আমার ইমেইল fahim.arefin@pareto.ai, আর backup contact নম্বর +৮৮০১৭১২-৩৪৫৬৭৮; দুটোই form-এ ঠিকমতো লিখো।",Email + phone
+LF031,LongForm_Task,instruction,"প্রথমে গ্যাস বন্ধ করো, তারপর main switch নামাও, তারপর দরজা লক করে নিচে নেমে security-কে জানাও।",Sequential instructions
+LF032,LongForm_Task,instruction,"তুমি যদি reportটা আজ submit না করো, তাহলে কালকের board meeting-এ এই বিষয়ে কোনো decision হবে না।",Conditional long sentence
+LF033,LongForm_Task,instruction,"শ্রদ্ধাভরে শিক্ষককে সালাম জানিয়ে সে মঞ্চে উঠল, কিন্তু প্রথম বাক্যেই তার কণ্ঠ কেঁপে উঠল।",Conjunct + narrative prosody
+LF034,LongForm_Task,instruction,"একই বাক্যে সংখ্যা, acronym, আর ইংরেজি শব্দ থাকলে modelটা কোথায় ভেঙে যায়, সেটা এই promptগুলো দিয়ে বোঝা যাবে।",Meta-stress prompt
+LF035,LongForm_Task,instruction,"আজ রাত ১১:৫৯-এর আগে portal-এ login করে application fee ৳১,২৫০.৫০ পরিশোধ করতে হবে।",Time + currency + code-mix
+LF036,LongForm_Task,instruction,"রাহাত (আমার ভাই) বলেছে যে Archer C6 routerটা restart করলে হয়তো Wi-Fi ঠিক হবে, কিন্তু আমি এখনো try করিনি।",Parenthetical + model name
+LF037,LongForm_Task,instruction,এই মুহূর্তে কেউ কথা বলবে না—শিশুটাকে ঘুম পাড়াতে খুব কষ্ট হচ্ছে।,Dash pause + emotive prosody
+LF038,LongForm_Task,instruction,"গ্রন্থাগারের সংশ্লিষ্ট নথিগুলো, বিশেষ করে রাষ্ট্রভাষা আন্দোলনের বিরল কপি, আলাদা তাকেতে সরিয়ে রাখো।",Conjunct-heavy long sentence
+LF039,LongForm_Task,instruction,"আমাকে @fahim_arefin-এ ping দাও, না হলে Slack-এ direct message করো, কারণ email আমি এখন দেখছি না।",Handle + multiple English tokens
+LF040,LongForm_Task,instruction,"প্রোডাক্ট কোড XR-12 Pro-এর demo videoটা 4K format-এ আছে, তাই mobile network-এ play করতে সমস্যা হতে পারে।",Product code + alphanumeric
+LF041,LongForm_Task,stress,"বাবা ভোরে ভাঙা ভেলা মেরামত করলেন, তারপর খালার জন্য কলা আর খেজুর কিনে আনলেন।",Aspiration and repetition
+LF042,LongForm_Task,stress,"যে ছেলে চঞ্চল চোখে চুপচাপ চিঠি পড়ে, সে নাকি খুব কঠিন কবিতাও সহজে মুখস্থ বলতে পারে।",Affricate repetition
+LF043,LongForm_Task,stress,"স্বপ্ন, স্মৃতি, স্ফূর্তি, আর স্নিগ্ধতা—এই চারটি শব্দ স্পষ্ট করে উচ্চারণ করে শোনাও।",Conjunct cluster list
+LF044,LongForm_Task,stress,"নিচের নির্দেশনা মন দিয়ে শোনো: প্রথমে form পূরণ করবে, তারপর photo upload করবে, তারপর submit বাটনে চাপ দেবে।",Colon + stepwise instructions
+LF045,LongForm_Task,stress,"দূরত্ব প্রায় ২.৩ কিমি হলেও রাস্তা ভাঙা, তাই ১০ মিনিটের পথ যেতে আধা ঘণ্টা লেগে যেতে পারে।",Distance + time + clause boundary
+LF046,LongForm_Task,stress,"WHO-এর briefing, UNICEF-এর update, আর UNESCO-এর press note—তিনটাতেই একই ঘটনার ভিন্ন ব্যাখ্যা দেওয়া হয়েছে।",Multiple acronyms + dash
+LF047,LongForm_Task,stress,"আমি বললাম, “আজই বের হও”, কিন্তু সে বলল, “না, আমি কাল সকালে যাব।”",Two quoted clauses
+LF048,LongForm_Task,stress,"ওষুধটা সকালে ১টা, দুপুরে ১/২টা, আর রাতে ১টা খেতে হবে; ডোজ ভুল কোরো না।",Fraction dose schedule
+LF049,LongForm_Task,stress,Final_Version_v2.3.docx ফাইলটা D:\Audio\Bangla\Final ফোল্ডার থেকে zip করে আমাকে পাঠাও।,Filename + path
+LF050,LongForm_Task,stress,"বাংলা, English, সংখ্যা, symbol, আর proper noun সব একসাথে থাকলে synthesizer-এর আসল সীমাবদ্ধতা বোঝা যায়।",Mixed-script integrated stress

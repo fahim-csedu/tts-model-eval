@@ -3,21 +3,25 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-end mb-4 fade-up">
     <div>
-        <h1 class="section-title mb-1">{{ 'Male' if 'Male' in sheet_name else 'Female' if 'Female' in sheet_name else sheet_name }}</h1>
-        <p class="text-muted mb-0">Jump into any item and keep moving.</p>
+        <h1 class="section-title mb-1">{{ dataset_label if shared_mode else ('Male' if 'Male' in sheet_name else 'Female' if 'Female' in sheet_name else sheet_name) }}</h1>
+        <p class="text-muted mb-0">{{ 'Annotate each text once across all voices.' if shared_mode else 'Jump into any item and keep moving.' }}</p>
     </div>
     <a href="/" class="btn btn-outline-secondary">Back to Sheets</a>
 </div>
 
 <div class="list-group fade-up">
     {% for item in items %}
-    <a href="/annotate/{{ sheet_name }}/{{ item.id }}"
-        class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+    <a href="{% if shared_mode %}/annotate/{{ item.id }}{% elif item.audio_available %}/annotate/{{ sheet_name }}/{{ item.id }}{% else %}#{% endif %}"
+        class="list-group-item list-group-item-action d-flex justify-content-between align-items-center {{ '' if (shared_mode or item.audio_available) else 'disabled opacity-75' }}">
         <div>
             <strong>ID: {{ item.id }}</strong> - {{ item.text[:50] }}...
         </div>
         {% if item.status == 'Annotated' %}
         <span class="badge bg-success rounded-pill">Annotated</span>
+        {% elif item.status == 'Incomplete Audio' %}
+        <span class="badge bg-secondary rounded-pill">Incomplete Audio</span>
+        {% elif item.status == 'Missing Audio' %}
+        <span class="badge bg-secondary rounded-pill">Missing Audio</span>
         {% else %}
         <span class="badge bg-warning text-dark rounded-pill">Pending</span>
         {% endif %}

@@ -1,0 +1,20 @@
+{
+  "endpoint": "https://read.bangla.gov.bd:9395",
+  "ssl_verify": false,
+  "total_sent": 164,
+  "total_received": 164,
+  "missing_responses": 0,
+  "unexpected_responses": 0,
+  "success_2xx": 164,
+  "non_2xx_or_missing_status": 0,
+  "schema_failures": 89,
+  "base64_failures": 0,
+  "wav_failures": 0,
+  "word_duration_mismatches": 10,
+  "rtt_p50_ms": 16031,
+  "rtt_p95_ms": 30167,
+  "rtt_max_ms": 31835,
+  "burst_drop_rate": null,
+  "reconnect_ok": null,
+  "results_csv": "outputs/20260312_053808_824e8798/results.csv"
+}
