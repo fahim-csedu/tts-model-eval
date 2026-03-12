@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>TTS Annotation UI — Bangla Voice Comparison</title>
+<style>
+  :root {
+    --bg: #f5f6fa;
+    --card: #ffffff;
+    --border: #e2e6f0;
+    --primary: #3b5bdb;
+    --primary-light: #eef2ff;
+    --accent: #f59f00;
+    --accent-light: #fff9db;
+    --danger: #e03131;
+    --danger-light: #fff5f5;
+    --success: #2f9e44;
+    --success-light: #ebfbee;
+    --text: #1a1a2e;
+    --muted: #6b7280;
+    --radius: 10px;
+    --shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    min-height: 100vh;
+  }
+
+  /* ── Top bar ── */
+  .topbar {
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .topbar-left { display: flex; align-items: center; gap: 16px; }
+  .logo { font-weight: 700; font-size: 15px; color: var(--primary); letter-spacing: -0.3px; }
+  .sample-id {
+    background: var(--primary-light);
+    color: var(--primary);
+    font-weight: 600;
+    font-size: 12px;
+    padding: 3px 10px;
+    border-radius: 20px;
+  }
+  .progress-wrap { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--muted); }
+  .progress-bar-outer { width: 140px; height: 6px; background: var(--border); border-radius: 99px; }
+  .progress-bar-inner { height: 6px; background: var(--primary); border-radius: 99px; width: 48%; }
+
+  /* ── Layout ── */
+  .main { max-width: 1280px; margin: 0 auto; padding: 20px 24px 60px; }
+
+  /* ── Section wrapper ── */
+  .section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+  }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .step-badge {
+    background: var(--primary);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .section-title { font-weight: 700; font-size: 14px; }
+  .section-hint { font-size: 12px; color: var(--muted); margin-left: auto; }
+
+  /* ── Source text + token marking ── */
+  .source-text {
+    font-family: "SolaimanLipi", "Kalpurush", "Noto Sans Bengali", sans-serif;
+    font-size: 20px;
+    line-height: 2;
+    padding: 14px 16px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 12px;
+    direction: ltr;
+  }
+  .token {
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: background 0.15s;
+    display: inline-block;
+  }
+  .token:hover { background: var(--primary-light); }
+  .token.flagged {
+    background: var(--accent-light);
+    border-bottom: 2px solid var(--accent);
+    font-weight: 600;
+    position: relative;
+  }
+  .token.flagged::after {
+    content: "⚑";
+    font-size: 9px;
+    color: var(--accent);
+    position: absolute;
+    top: -4px;
+    right: -2px;
+  }
+
+  /* ── Flagged tokens editor ── */
+  .flagged-list { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
+  .flagged-item {
+    display: grid;
+    grid-template-columns: 180px 1fr 1fr auto;
+    gap: 10px;
+    align-items: center;
+    background: var(--accent-light);
+    border: 1px solid #ffe066;
+    border-radius: 8px;
+    padding: 10px 14px;
+  }
+  .flagged-token-label {
+    font-family: "Noto Sans Bengali", sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: #7c5d00;
+  }
+  .flagged-item select, .flagged-item input {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 5px 8px;
+    font-size: 13px;
+    background: #fff;
+    color: var(--text);
+    outline: none;
+  }
+  .flagged-item select:focus { border-color: var(--primary); }
+  .remove-btn {
+    background: none;
+    border: none;
+    color: var(--danger);
+    font-size: 16px;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: background 0.15s;
+  }
+  .remove-btn:hover { background: var(--danger-light); }
+  .no-flags {
+    color: var(--muted);
+    font-size: 13px;
+    text-align: center;
+    padding: 10px 0;
+    font-style: italic;
+  }
+
+  /* ── Voice cards grid ── */
+  .voices-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+  }
+
+  .voice-card {
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .voice-card.selected { border-color: var(--primary); }
+
+  .voice-card-header {
+    padding: 10px 14px;
+    font-weight: 700;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+  .voice-card-header.male-0 { background: #e8f4fd; color: #0c5e96; }
+  .voice-card-header.male-1 { background: #e8f0fe; color: #1a56b0; }
+  .voice-card-header.female-0 { background: #fce4f5; color: #8c1f6e; }
+  .voice-card-header.female-1 { background: #f3e6ff; color: #6020b0; }
+
+  .voice-card-body { padding: 12px 14px; display: flex; flex-direction: column; gap: 12px; }
+
+  /* audio player mock */
+  .audio-player {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .play-btn {
+    width: 28px; height: 28px;
+    background: var(--primary);
+    border: none;
+    border-radius: 50%;
+    color: white;
+    font-size: 11px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.15s;
+  }
+  .play-btn:hover { background: #2f4abf; }
+  .waveform {
+    flex: 1;
+    height: 24px;
+    background: linear-gradient(to right,
+      #c5cef7 0%, #8fa4f3 15%, #c5cef7 30%,
+      #a8baf7 50%, #c5cef7 65%, #8fa4f3 80%, #c5cef7 100%);
+    border-radius: 4px;
+    opacity: 0.7;
+  }
+  .duration { font-size: 11px; color: var(--muted); flex-shrink: 0; }
+
+  /* naturalness */
+  .field-label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+
+  .nat-options { display: flex; gap: 4px; }
+  .nat-btn {
+    flex: 1;
+    padding: 5px 2px;
+    font-size: 11px;
+    font-weight: 600;
+    border: 1.5px solid var(--border);
+    border-radius: 6px;
+    background: #fff;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s;
+    color: var(--muted);
+  }
+  .nat-btn:hover { border-color: var(--primary); color: var(--primary); }
+  .nat-btn.selected-human { background: var(--success-light); border-color: var(--success); color: var(--success); }
+  .nat-btn.selected-slight { background: var(--accent-light); border-color: var(--accent); color: #7c5d00; }
+  .nat-btn.selected-robotic { background: var(--danger-light); border-color: var(--danger); color: var(--danger); }
+
+  /* token handling per voice */
+  .token-handling { display: flex; flex-direction: column; gap: 6px; }
+  .token-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    background: var(--bg);
+    border-radius: 6px;
+    padding: 5px 8px;
+  }
+  .token-row-label {
+    font-family: "Noto Sans Bengali", sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: #7c5d00;
+    flex-shrink: 0;
+  }
+  .handling-btns { display: flex; gap: 3px; }
+  .h-btn {
+    padding: 3px 7px;
+    font-size: 10px;
+    font-weight: 600;
+    border: 1.5px solid var(--border);
+    border-radius: 5px;
+    background: #fff;
+    cursor: pointer;
+    transition: all 0.12s;
+    white-space: nowrap;
+  }
+  .h-btn:hover { opacity: 0.8; }
+  .h-btn.sel-correct { background: var(--success-light); border-color: var(--success); color: var(--success); }
+  .h-btn.sel-skip { background: var(--danger-light); border-color: var(--danger); color: var(--danger); }
+  .h-btn.sel-mis { background: var(--accent-light); border-color: var(--accent); color: #7c5d00; }
+
+  .no-tokens-note { font-size: 11px; color: var(--muted); font-style: italic; text-align: center; padding: 4px 0; }
+
+  /* ── Preference + notes ── */
+  .pref-notes-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
+
+  .pref-options { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+  .pref-btn {
+    padding: 8px 18px;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    background: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    color: var(--muted);
+  }
+  .pref-btn:hover { border-color: var(--primary); color: var(--primary); }
+  .pref-btn.selected { background: var(--primary-light); border-color: var(--primary); color: var(--primary); }
+  .pref-btn.equal { border-style: dashed; }
+
+  textarea {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 13px;
+    resize: vertical;
+    min-height: 70px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  textarea:focus { border-color: var(--primary); }
+
+  /* ── Submit bar ── */
+  .submit-bar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--card);
+    border-top: 1px solid var(--border);
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.07);
+    z-index: 100;
+  }
+  .submit-hints { display: flex; gap: 16px; font-size: 12px; color: var(--muted); }
+  .hint-item { display: flex; align-items: center; gap: 5px; }
+  .hint-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .hint-dot.green { background: var(--success); }
+  .hint-dot.orange { background: var(--accent); }
+  .hint-dot.red { background: var(--danger); }
+
+  .submit-actions { display: flex; gap: 10px; }
+  .btn-skip {
+    padding: 8px 20px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    background: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--muted);
+    transition: all 0.15s;
+  }
+  .btn-skip:hover { border-color: var(--muted); color: var(--text); }
+  .btn-submit {
+    padding: 8px 28px;
+    border: none;
+    border-radius: 8px;
+    background: var(--primary);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s;
+    box-shadow: 0 2px 6px rgba(59,91,219,0.3);
+  }
+  .btn-submit:hover { background: #2f4abf; }
+
+  /* completion flash */
+  .toast {
+    position: fixed;
+    top: 20px; right: 24px;
+    background: var(--success);
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: all 0.3s;
+    pointer-events: none;
+    z-index: 200;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+
+  @media (max-width: 1000px) {
+    .voices-grid { grid-template-columns: repeat(2, 1fr); }
+    .pref-notes-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Top bar -->
+<div class="topbar">
+  <div class="topbar-left">
+    <span class="logo">TTS Eval Studio</span>
+    <span class="sample-id">Sample T-0048</span>
+  </div>
+  <div class="progress-wrap">
+    <span>48 / 100</span>
+    <div class="progress-bar-outer"><div class="progress-bar-inner"></div></div>
+    <span>48%</span>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- STEP 1 — Source text & token flagging -->
+  <div class="section">
+    <div class="section-header">
+      <div class="step-badge">1</div>
+      <span class="section-title">Flag problem tokens — mark once, applies to all voices</span>
+      <span class="section-hint">Click any word to flag it</span>
+    </div>
+
+    <div class="source-text" id="sourceText"></div>
+
+    <div id="flaggedList" class="flagged-list">
+      <div class="no-flags" id="noFlagsMsg">No tokens flagged yet — click a word above to flag it</div>
+    </div>
+  </div>
+
+  <!-- STEP 2 — Per-voice rating -->
+  <div class="section">
+    <div class="section-header">
+      <div class="step-badge">2</div>
+      <span class="section-title">Rate each voice</span>
+      <span class="section-hint">Naturalness + how each voice handled the flagged tokens</span>
+    </div>
+
+    <div class="voices-grid" id="voicesGrid"></div>
+  </div>
+
+  <!-- STEP 3 — Preference & notes -->
+  <div class="section">
+    <div class="section-header">
+      <div class="step-badge">3</div>
+      <span class="section-title">Overall preference &amp; notes</span>
+    </div>
+    <div class="pref-notes-grid">
+      <div>
+        <div class="field-label">Which voice sounded best overall?</div>
+        <div class="pref-options" id="prefOptions">
+          <button class="pref-btn" data-val="male_spk0" onclick="selectPref(this)">Male spk0</button>
+          <button class="pref-btn" data-val="male_spk1" onclick="selectPref(this)">Male spk1</button>
+          <button class="pref-btn" data-val="female_spk0" onclick="selectPref(this)">Female spk0</button>
+          <button class="pref-btn" data-val="female_spk1" onclick="selectPref(this)">Female spk1</button>
+          <button class="pref-btn equal" data-val="equal" onclick="selectPref(this)">Equal / No preference</button>
+        </div>
+      </div>
+      <div>
+        <div class="field-label">Notes (optional)</div>
+        <textarea id="notes" placeholder="e.g. Male spk0 skips numeric entirely; female voices handle it better…"></textarea>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Submit bar -->
+<div class="submit-bar">
+  <div class="submit-hints">
+    <div class="hint-item"><div class="hint-dot green"></div> Human-like</div>
+    <div class="hint-item"><div class="hint-dot orange"></div> Slightly Robotic</div>
+    <div class="hint-item"><div class="hint-dot red"></div> Very Robotic</div>
+  </div>
+  <div class="submit-actions">
+    <button class="btn-skip" onclick="skip()">Skip sample</button>
+    <button class="btn-submit" onclick="submitAnnotation()">Save &amp; Next →</button>
+  </div>
+</div>
+
+<div class="toast" id="toast">✓ Saved! Moving to next sample…</div>
+
+<script>
+// ── Sample data ──────────────────────────────────────────────────────────────
+const sampleText = "আমার meeting টা ৩টায় আছে। Project submit করতে হবে। www.example.com থেকে form টা ডাউনলোড করো।";
+
+const voices = [
+  { id: "male_spk0",   label: "Male spk0",   cls: "male-0"   },
+  { id: "male_spk1",   label: "Male spk1",   cls: "male-1"   },
+  { id: "female_spk0", label: "Female spk0", cls: "female-0" },
+  { id: "female_spk1", label: "Female spk1", cls: "female-1" },
+];
+
+const ERROR_CATS = [
+  "Text Normalisation",
+  "Skipped Token",
+  "Mispronunciation",
+  "Wrong Stress/Tone",
+  "Conjunct Error",
+  "Code-Switch Handling",
+  "Other",
+];
+
+const SUBSYSTEMS = [
+  "Phoneme Conversion",
+  "Text Pre-processing",
+  "Prosody Model",
+  "Acoustic Model",
+  "Unknown",
+];
+
+// ── State ────────────────────────────────────────────────────────────────────
+let flaggedTokens = [];   // [{ token, index, category, subsystem }]
+let voiceState = {};      // { voice_id: { naturalness, handling: { token_idx: val } } }
+
+voices.forEach(v => {
+  voiceState[v.id] = { naturalness: null, handling: {} };
+});
+
+// ── Render source text ───────────────────────────────────────────────────────
+function renderSourceText() {
+  const container = document.getElementById("sourceText");
+  const words = sampleText.split(/(\s+)/);
+  let wordIdx = 0;
+  container.innerHTML = "";
+
+  words.forEach((part) => {
+    if (/^\s+$/.test(part)) {
+      container.appendChild(document.createTextNode(part));
+      return;
+    }
+    const span = document.createElement("span");
+    span.className = "token";
+    span.textContent = part;
+    const idx = wordIdx++;
+    span.dataset.idx = idx;
+    span.dataset.word = part;
+    span.onclick = () => toggleToken(span, part, idx);
+    if (flaggedTokens.find(f => f.index === idx)) span.classList.add("flagged");
+    container.appendChild(span);
+  });
+}
+
+function toggleToken(span, word, idx) {
+  const existing = flaggedTokens.findIndex(f => f.index === idx);
+  if (existing > -1) {
+    flaggedTokens.splice(existing, 1);
+    span.classList.remove("flagged");
+  } else {
+    flaggedTokens.push({ token: word, index: idx, category: ERROR_CATS[0], subsystem: SUBSYSTEMS[0] });
+    span.classList.add("flagged");
+  }
+  renderFlaggedList();
+  renderVoiceTokenRows();
+}
+
+// ── Flagged tokens list ──────────────────────────────────────────────────────
+function renderFlaggedList() {
+  const list = document.getElementById("flaggedList");
+  const noMsg = document.getElementById("noFlagsMsg");
+  list.innerHTML = "";
+
+  if (flaggedTokens.length === 0) {
+    list.appendChild(Object.assign(document.createElement("div"), {
+      className: "no-flags",
+      textContent: "No tokens flagged yet — click a word above to flag it"
+    }));
+    return;
+  }
+
+  flaggedTokens.forEach((ft, i) => {
+    const row = document.createElement("div");
+    row.className = "flagged-item";
+
+    // Label
+    const lbl = document.createElement("div");
+    lbl.className = "flagged-token-label";
+    lbl.textContent = ft.token;
+
+    // Category
+    const catSel = document.createElement("select");
+    ERROR_CATS.forEach(c => {
+      const o = document.createElement("option");
+      o.value = c; o.textContent = c;
+      if (c === ft.category) o.selected = true;
+      catSel.appendChild(o);
+    });
+    catSel.onchange = () => { flaggedTokens[i].category = catSel.value; };
+
+    // Subsystem
+    const subSel = document.createElement("select");
+    SUBSYSTEMS.forEach(s => {
+      const o = document.createElement("option");
+      o.value = s; o.textContent = s;
+      if (s === ft.subsystem) o.selected = true;
+      subSel.appendChild(o);
+    });
+    subSel.onchange = () => { flaggedTokens[i].subsystem = subSel.value; };
+
+    // Remove
+    const rmBtn = document.createElement("button");
+    rmBtn.className = "remove-btn";
+    rmBtn.innerHTML = "✕";
+    rmBtn.onclick = () => {
+      flaggedTokens.splice(i, 1);
+      renderSourceText();
+      renderFlaggedList();
+      renderVoiceTokenRows();
+    };
+
+    row.append(lbl, catSel, subSel, rmBtn);
+    list.appendChild(row);
+  });
+}
+
+// ── Voice cards ──────────────────────────────────────────────────────────────
+function renderVoicesGrid() {
+  const grid = document.getElementById("voicesGrid");
+  grid.innerHTML = "";
+  voices.forEach(v => {
+    grid.appendChild(buildVoiceCard(v));
+  });
+}
+
+function buildVoiceCard(v) {
+  const card = document.createElement("div");
+  card.className = "voice-card";
+  card.id = "card-" + v.id;
+
+  // Header
+  const hdr = document.createElement("div");
+  hdr.className = `voice-card-header ${v.cls}`;
+  hdr.innerHTML = `<span>${v.label}</span>`;
+  card.appendChild(hdr);
+
+  const body = document.createElement("div");
+  body.className = "voice-card-body";
+
+  // Audio player (mock)
+  body.innerHTML += `
+    <div class="audio-player">
+      <button class="play-btn" title="Play">▶</button>
+      <div class="waveform"></div>
+      <span class="duration">0:04</span>
+    </div>`;
+
+  // Naturalness
+  const natWrap = document.createElement("div");
+  natWrap.innerHTML = `<div class="field-label">Naturalness</div>`;
+  const natOpts = document.createElement("div");
+  natOpts.className = "nat-options";
+
+  [["Human", "selected-human"], ["Slight", "selected-slight"], ["Robotic", "selected-robotic"]].forEach(([label, cls]) => {
+    const btn = document.createElement("button");
+    btn.className = "nat-btn";
+    btn.textContent = label;
+    const curr = voiceState[v.id].naturalness;
+    if ((label === "Human" && curr === "Human-like") ||
+        (label === "Slight" && curr === "Slightly Robotic") ||
+        (label === "Robotic" && curr === "Very Robotic")) {
+      btn.classList.add(cls);
+    }
+    btn.onclick = () => {
+      natOpts.querySelectorAll(".nat-btn").forEach(b => b.classList.remove("selected-human","selected-slight","selected-robotic"));
+      btn.classList.add(cls);
+      voiceState[v.id].naturalness = label === "Human" ? "Human-like" : label === "Slight" ? "Slightly Robotic" : "Very Robotic";
+    };
+    natOpts.appendChild(btn);
+  });
+  natWrap.appendChild(natOpts);
+  body.appendChild(natWrap);
+
+  // Token handling rows
+  const tokenWrap = document.createElement("div");
+  tokenWrap.id = `token-handling-${v.id}`;
+  body.appendChild(tokenWrap);
+
+  card.appendChild(body);
+  return card;
+}
+
+function renderVoiceTokenRows() {
+  voices.forEach(v => {
+    const wrap = document.getElementById(`token-handling-${v.id}`);
+    if (!wrap) return;
+    wrap.innerHTML = "";
+
+    if (flaggedTokens.length === 0) {
+      wrap.innerHTML = `<div class="no-tokens-note">No tokens flagged</div>`;
+      return;
+    }
+
+    const lbl = document.createElement("div");
+    lbl.className = "field-label";
+    lbl.textContent = "Token handling";
+    wrap.appendChild(lbl);
+
+    const rows = document.createElement("div");
+    rows.className = "token-handling";
+
+    flaggedTokens.forEach(ft => {
+      const row = document.createElement("div");
+      row.className = "token-row";
+
+      const tl = document.createElement("span");
+      tl.className = "token-row-label";
+      tl.textContent = ft.token;
+
+      const btns = document.createElement("div");
+      btns.className = "handling-btns";
+
+      const cur = (voiceState[v.id].handling[ft.index] || null);
+
+      [["✓ Correct","correct","sel-correct"],["✕ Skip","skip","sel-skip"],["~ Misp.","mis","sel-mis"]].forEach(([label,val,cls]) => {
+        const b = document.createElement("button");
+        b.className = "h-btn" + (cur === val ? " " + cls : "");
+        b.textContent = label;
+        b.onclick = () => {
+          btns.querySelectorAll(".h-btn").forEach(x => x.classList.remove("sel-correct","sel-skip","sel-mis"));
+          b.classList.add(cls);
+          voiceState[v.id].handling[ft.index] = val;
+        };
+        btns.appendChild(b);
+      });
+
+      row.append(tl, btns);
+      rows.appendChild(row);
+    });
+
+    wrap.appendChild(rows);
+  });
+}
+
+// ── Preference ───────────────────────────────────────────────────────────────
+let selectedPref = null;
+function selectPref(btn) {
+  document.querySelectorAll(".pref-btn").forEach(b => b.classList.remove("selected"));
+  btn.classList.add("selected");
+  selectedPref = btn.dataset.val;
+}
+
+// ── Submit ────────────────────────────────────────────────────────────────────
+function submitAnnotation() {
+  const result = {
+    sampleId: "T-0048",
+    flaggedTokens: flaggedTokens.map(ft => ({
+      token: ft.token,
+      category: ft.category,
+      subsystem: ft.subsystem,
+    })),
+    voiceRatings: {},
+    preference: selectedPref,
+    notes: document.getElementById("notes").value.trim(),
+  };
+  voices.forEach(v => {
+    result.voiceRatings[v.id] = {
+      naturalness: voiceState[v.id].naturalness,
+      tokenHandling: Object.entries(voiceState[v.id].handling).reduce((acc,[idx,val]) => {
+        const ft = flaggedTokens.find(f => f.index === parseInt(idx));
+        if (ft) acc[ft.token] = val;
+        return acc;
+      }, {})
+    };
+  });
+  console.log("Annotation submitted:", JSON.stringify(result, null, 2));
+  const toast = document.getElementById("toast");
+  toast.classList.add("show");
+  setTimeout(() => toast.classList.remove("show"), 2200);
+}
+
+function skip() {
+  if (confirm("Skip this sample? It will be added to the review queue.")) {
+    console.log("Skipped T-0048");
+    const toast = document.getElementById("toast");
+    toast.textContent = "⏭ Skipped — moving to next…";
+    toast.classList.add("show");
+    setTimeout(() => { toast.classList.remove("show"); toast.textContent = "✓ Saved! Moving to next sample…"; }, 2000);
+  }
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+renderSourceText();
+renderFlaggedList();
+renderVoicesGrid();
+renderVoiceTokenRows();
+</script>
+</body>
+</html>

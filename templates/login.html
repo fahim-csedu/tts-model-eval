@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="display:flex; align-items:center; justify-content:center; min-height:calc(100vh - 180px);">
+  <div class="ui-card fade-up" style="width:380px; max-width:92vw;">
+    <div class="ui-card-header" style="justify-content:center; padding:24px 20px 16px;">
+      <div style="text-align:center;">
+        <div style="font-size:28px; margin-bottom:8px;">🎧</div>
+        <h2 style="font-size:18px; font-weight:700; margin:0;">TTS Evaluation Studio</h2>
+        <p style="font-size:13px; color:var(--c-muted); margin:6px 0 0;">Sign in to start annotating</p>
+      </div>
+    </div>
+    <div class="ui-card-body" style="padding:20px 24px 28px;">
+      {% if error %}
+      <div style="background:var(--c-danger-light); color:var(--c-danger); border:1px solid var(--c-danger); border-radius:var(--radius-sm); padding:10px 14px; font-size:13px; font-weight:500; margin-bottom:16px;">
+        {{ error }}
+      </div>
+      {% endif %}
+
+      <form method="POST" action="/login" autocomplete="off">
+        <div style="margin-bottom:14px;">
+          <label style="font-size:12px; font-weight:600; color:var(--c-text-2); display:block; margin-bottom:5px;">
+            Username
+          </label>
+          <input type="text" name="username" required autofocus
+            style="width:100%; padding:10px 14px; border:1.5px solid var(--c-border); border-radius:var(--radius); font-size:14px; font-family:var(--font-sans); outline:none; transition:border-color 150ms ease; background:var(--c-surface);"
+            onfocus="this.style.borderColor='var(--c-accent)'; this.style.boxShadow='0 0 0 3px rgba(99,102,241,.1)';"
+            onblur="this.style.borderColor='var(--c-border)'; this.style.boxShadow='none';"
+            placeholder="Enter your name"
+            value="{{ request.form.get('username', '') }}">
+        </div>
+        <div style="margin-bottom:20px;">
+          <label style="font-size:12px; font-weight:600; color:var(--c-text-2); display:block; margin-bottom:5px;">
+            Password
+          </label>
+          <input type="password" name="password" required
+            style="width:100%; padding:10px 14px; border:1.5px solid var(--c-border); border-radius:var(--radius); font-size:14px; font-family:var(--font-sans); outline:none; transition:border-color 150ms ease; background:var(--c-surface);"
+            onfocus="this.style.borderColor='var(--c-accent)'; this.style.boxShadow='0 0 0 3px rgba(99,102,241,.1)';"
+            onblur="this.style.borderColor='var(--c-border)'; this.style.boxShadow='none';"
+            placeholder="Enter your password">
+        </div>
+        <button type="submit" class="btn-primary-custom" style="width:100%; padding:12px; font-size:15px;">
+          Sign in
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

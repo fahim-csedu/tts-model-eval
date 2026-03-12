@@ -1,33 +1,70 @@
-from flask import Flask, render_template, request, jsonify, send_from_directory, redirect, url_for
+from datetime import timedelta
+
+from flask import (
+    Flask, render_template, request, jsonify, send_from_directory,
+    redirect, url_for, session
+)
+from functools import wraps
 import pandas as pd
 import os
 import json
 
 app = Flask(__name__)
+app.secret_key = os.environ.get('SECRET_KEY', 'tts-eval-studio-dev-key-change-in-prod')
+app.permanent_session_lifetime = timedelta(days=30)
 
-# Configuration (Relative to where the script is run, assumed project root)
+# ── Annotator credentials ──────────────────────────────────────
+# Add new annotators here — { display_name: password }
+ANNOTATORS = {
+    'Annotator1': 'pass1',
+    'Annotator2': 'pass2',
+}
+
+# ── Configuration ──────────────────────────────────────────────
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-# If running from eval_app/ directory, go up one level. 
-# But we'll assume running from project root: python eval_app/app.py
-# PROJECT_ROOT = os.getcwd() 
-
-# Adjust paths if we are inside eval_app directory
-# if os.path.basename(PROJECT_ROOT) == 'eval_app':
-#     PROJECT_ROOT = os.path.dirname(PROJECT_ROOT)
-# PROJECT_ROOT = os.path.join(BASE_DIR, '..') # Old structure
-PROJECT_ROOT = BASE_DIR # New structure: app and model_eval are in same dir
+PROJECT_ROOT = BASE_DIR
 
 DEFAULT_MODEL_EVAL_DIR = 'model_eval_v2' if os.path.exists(os.path.join(PROJECT_ROOT, 'model_eval_v2')) else 'model_eval'
 MODEL_EVAL_DIR = os.environ.get('MODEL_EVAL_DIR', DEFAULT_MODEL_EVAL_DIR)
 EXCEL_FILE = os.path.join(PROJECT_ROOT, MODEL_EVAL_DIR, 'Model Evaluation Results.xlsx')
 AUDIO_DIR = os.path.join(PROJECT_ROOT, MODEL_EVAL_DIR, 'audio')
 ANNOTATION_DIR = os.path.join(PROJECT_ROOT, MODEL_EVAL_DIR, 'annotations')
-SHARED_ANNOTATION_DIR = os.path.join(ANNOTATION_DIR, '_shared')
 
 print(f"Project Root: {PROJECT_ROOT}")
 print(f"Model Eval Dir: {MODEL_EVAL_DIR}")
 print(f"Excel Path: {EXCEL_FILE}")
 
+
+# ── Authentication ─────────────────────────────────────────────
+def login_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if 'annotator' not in session:
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated
+
+
+def get_annotator():
+    """Return the current logged-in annotator name."""
+    return session.get('annotator')
+
+
+def get_annotator_annotation_dir():
+    """Return the annotation base dir for the current annotator.
+
+    Structure:  annotations/{annotator_name}/...
+    Each annotator gets their own full copy of the annotation tree.
+    """
+    annotator = get_annotator()
+    if not annotator:
+        return None
+    d = os.path.join(ANNOTATION_DIR, annotator)
+    os.makedirs(d, exist_ok=True)
+    return d
+
+
+# ── Data helpers ───────────────────────────────────────────────
 def get_excel_data():
     try:
         xls = pd.ExcelFile(EXCEL_FILE)
@@ -36,9 +73,11 @@ def get_excel_data():
         print(f"Error reading Excel: {e}")
         return None
 
+
 def is_multi_voice_dataset(xls=None):
     workbook = xls if xls is not None else get_excel_data()
     return bool(workbook and len(workbook.sheet_names) > 2)
+
 
 def get_primary_sheet_name(xls=None):
     workbook = xls if xls is not None else get_excel_data()
@@ -46,27 +85,28 @@ def get_primary_sheet_name(xls=None):
         return None
     return workbook.sheet_names[0]
 
+
 def load_json_if_exists(path):
     if not os.path.exists(path):
         return {}
     with open(path, 'r', encoding='utf-8') as f:
         return json.load(f)
 
+
 def get_item_text(sheet_name, item_id, xls=None):
     try:
         workbook = xls if xls is not None else get_excel_data()
         if workbook is None:
             return None
-
         df = pd.read_excel(workbook, sheet_name=sheet_name)
         row = df[df['ItemID'].astype(str) == str(item_id)]
         if row.empty:
             return None
-
         return str(row.iloc[0]['Text'])
     except Exception as e:
         print(f"Error resolving text for {sheet_name}/{item_id}: {e}")
         return None
+
 
 def normalize_token_errors(raw_token_errors):
     if raw_token_errors in (None, ''):
@@ -86,11 +126,9 @@ def normalize_token_errors(raw_token_errors):
     for entry in token_errors:
         if not isinstance(entry, dict):
             continue
-
         token = str(entry.get('token', '')).strip()
         if not token:
             continue
-
         try:
             token_index = int(entry.get('token_index'))
         except (TypeError, ValueError):
@@ -102,7 +140,7 @@ def normalize_token_errors(raw_token_errors):
             'error_category': str(entry.get('error_category', '')).strip(),
             'severity': str(entry.get('severity', 'Critical')).strip() or 'Critical',
             'subsystem_guess': str(entry.get('subsystem_guess', 'Unknown')).strip() or 'Unknown',
-            'annotator_confidence': str(entry.get('annotator_confidence', '5')).strip() or '5',
+            'annotator_confidence': str(entry.get('annotator_confidence', '3')).strip() or '3',
         })
 
     normalized.sort(key=lambda item: (
@@ -112,8 +150,10 @@ def normalize_token_errors(raw_token_errors):
     ))
     return normalized
 
+
 def build_incorrect_words_summary(token_errors):
     return ', '.join(entry['token'] for entry in token_errors if entry.get('token'))
+
 
 def build_annotation_payload(sheet_name, item_id, annotation, xls=None):
     payload = dict(annotation or {})
@@ -122,19 +162,30 @@ def build_annotation_payload(sheet_name, item_id, annotation, xls=None):
         payload['TokenErrors'] = token_errors
         payload['IncorrectWords'] = build_incorrect_words_summary(token_errors)
 
+    # Stamp annotator name
+    annotator = get_annotator()
+    if annotator:
+        payload['Annotator'] = annotator
+
     text = get_item_text(sheet_name, item_id, xls=xls)
     if text is not None:
         payload['Text'] = text
     return payload
 
+
 def get_shared_annotation_path(item_id):
-    os.makedirs(SHARED_ANNOTATION_DIR, exist_ok=True)
-    return os.path.join(SHARED_ANNOTATION_DIR, f"{item_id}.json")
+    """Return the per-annotator shared annotation path."""
+    ann_dir = get_annotator_annotation_dir()
+    if not ann_dir:
+        # Fallback for unauthenticated (shouldn't happen)
+        ann_dir = os.path.join(ANNOTATION_DIR, '_shared')
+    shared_dir = os.path.join(ann_dir, '_shared')
+    os.makedirs(shared_dir, exist_ok=True)
+    return os.path.join(shared_dir, f"{item_id}.json")
+
 
 def resolve_peer_sheet(sheet_name, all_sheet_names):
     explicit_map = {
-        'Atika - Male': 'Atika - Female',
-        'Atika - Female': 'Atika - Male',
         'Male': 'Female',
         'Female': 'Male',
     }
@@ -153,7 +204,42 @@ def resolve_peer_sheet(sheet_name, all_sheet_names):
                 return name
     return None
 
+
+# ── Routes: Auth ───────────────────────────────────────────────
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'GET':
+        if 'annotator' in session:
+            return redirect(url_for('index'))
+        return render_template('login.html', error=None)
+
+    username = request.form.get('username', '').strip()
+    password = request.form.get('password', '')
+
+    # Case-insensitive lookup
+    matched = None
+    for name, pw in ANNOTATORS.items():
+        if name.lower() == username.lower() and pw == password:
+            matched = name
+            break
+
+    if matched:
+        session['annotator'] = matched
+        session.permanent = True
+        return redirect(url_for('index'))
+
+    return render_template('login.html', error='Wrong username or password. Please try again.')
+
+
+@app.route('/logout')
+def logout():
+    session.pop('annotator', None)
+    return redirect(url_for('login'))
+
+
+# ── Routes: Pages ──────────────────────────────────────────────
 @app.route('/')
+@login_required
 def index():
     xls = get_excel_data()
     if not xls:
@@ -178,6 +264,7 @@ def index():
     target_id = first_pending if first_pending else first_available if first_available else items[0]['id']
     return redirect(url_for('annotate', sheet_name=target_sheet, item_id=target_id))
 
+
 def build_voice_entries(item_id, sheet_names):
     entries = []
     for sheet_name in sheet_names:
@@ -189,6 +276,7 @@ def build_voice_entries(item_id, sheet_names):
             'audio_url': url_for('serve_audio', sheet_name=sheet_name, filename=f"{item_id}.wav"),
         })
     return entries
+
 
 def get_shared_items(xls=None):
     workbook = xls if xls is not None else get_excel_data()
@@ -204,8 +292,9 @@ def get_shared_items(xls=None):
         text = str(row['Text'])
         voice_entries = build_voice_entries(item_id, workbook.sheet_names)
         all_audio_available = all(entry['audio_available'] for entry in voice_entries)
-        shared_path = get_shared_annotation_path(item_id)
 
+        # Check THIS annotator's annotation
+        shared_path = get_shared_annotation_path(item_id)
         if os.path.exists(shared_path):
             status = "Annotated"
         elif all_audio_available:
@@ -222,7 +311,9 @@ def get_shared_items(xls=None):
 
     return items
 
+
 @app.route('/items')
+@login_required
 def list_items():
     xls = get_excel_data()
     if not xls:
@@ -235,32 +326,34 @@ def list_items():
 
 
 @app.route('/sheet/<sheet_name>')
+@login_required
 def list_sheet(sheet_name):
     xls = get_excel_data()
     if not xls:
         return "Error."
     if is_multi_voice_dataset(xls):
         return redirect(url_for('list_items'))
-    
+
     try:
         df = pd.read_excel(xls, sheet_name=sheet_name)
-    except:
+    except Exception:
         return "Sheet not found."
 
     items = get_sheet_items(sheet_name, df)
     return render_template('list.html', sheet_name=sheet_name, items=items)
 
+
 def get_sheet_items(sheet_name, df):
     items = []
-    sheet_annotation_dir = os.path.join(ANNOTATION_DIR, sheet_name)
+    ann_dir = get_annotator_annotation_dir()
+    sheet_annotation_dir = os.path.join(ann_dir, sheet_name) if ann_dir else os.path.join(ANNOTATION_DIR, sheet_name)
     sheet_audio_dir = os.path.join(AUDIO_DIR, sheet_name)
     os.makedirs(sheet_annotation_dir, exist_ok=True)
-    
+
     for _, row in df.iterrows():
         item_id = str(row['ItemID'])
         text = str(row['Text'])
-        
-        # Check if JSON exists
+
         json_path = os.path.join(sheet_annotation_dir, f"{item_id}.json")
         audio_path = os.path.join(sheet_audio_dir, f"{item_id}.wav")
         audio_available = os.path.exists(audio_path)
@@ -268,7 +361,7 @@ def get_sheet_items(sheet_name, df):
             status = "Missing Audio"
         else:
             status = "Annotated" if os.path.exists(json_path) else "Pending"
-        
+
         items.append({
             'id': item_id,
             'text': text,
@@ -276,6 +369,7 @@ def get_sheet_items(sheet_name, df):
             'audio_available': audio_available,
         })
     return items
+
 
 def get_item_navigation(items, item_id):
     all_ids = [item['id'] for item in items]
@@ -288,7 +382,9 @@ def get_item_navigation(items, item_id):
         prev_id = None
     return prev_id, next_id
 
+
 @app.route('/annotate/<item_id>')
+@login_required
 def annotate_item(item_id):
     xls = get_excel_data()
     if not xls:
@@ -309,6 +405,10 @@ def annotate_item(item_id):
     prev_id, next_id = get_item_navigation(items, item_id)
     voices = build_voice_entries(item_id, xls.sheet_names)
 
+    css_classes = ['male-0', 'male-1', 'female-0', 'female-1']
+    for i, v in enumerate(voices):
+        v['css_class'] = css_classes[i % len(css_classes)]
+
     return render_template(
         'annotate_shared.html',
         item_id=item_id,
@@ -323,29 +423,26 @@ def annotate_item(item_id):
         next_id=next_id,
     )
 
+
 @app.route('/annotate/<sheet_name>/<item_id>')
+@login_required
 def annotate(sheet_name, item_id):
     xls = get_excel_data()
     if is_multi_voice_dataset(xls):
         return redirect(url_for('annotate_item', item_id=item_id))
     df = pd.read_excel(xls, sheet_name=sheet_name)
-    
-    # Get all items for sidebar
-    items = get_sheet_items(sheet_name, df)
 
-    # Find the row
+    items = get_sheet_items(sheet_name, df)
     row = df[df['ItemID'].astype(str) == item_id].iloc[0]
     text = row['Text']
     primary_audio_available = os.path.exists(os.path.join(AUDIO_DIR, sheet_name, f"{item_id}.wav"))
-    
-    # Check if existing annotation
-    json_path = os.path.join(ANNOTATION_DIR, sheet_name, f"{item_id}.json")
-    existing_data = {}
-    if os.path.exists(json_path):
-        with open(json_path, 'r', encoding='utf-8') as f:
-            existing_data = json.load(f)
 
-    # Next item for easy navigation
+    # Per-annotator annotation
+    ann_dir = get_annotator_annotation_dir()
+    sheet_ann_dir = os.path.join(ann_dir, sheet_name) if ann_dir else os.path.join(ANNOTATION_DIR, sheet_name)
+    json_path = os.path.join(sheet_ann_dir, f"{item_id}.json")
+    existing_data = load_json_if_exists(json_path)
+
     all_ids = df['ItemID'].astype(str).tolist()
     try:
         curr_idx = all_ids.index(item_id)
@@ -355,33 +452,31 @@ def annotate(sheet_name, item_id):
         next_id = None
         prev_id = None
 
-    # Peer Sheet Logic (for Male/Female comparison)
     peer_sheet_name = resolve_peer_sheet(sheet_name, xls.sheet_names)
     peer_data = {}
-    
-    if peer_sheet_name:
-        peer_json_path = os.path.join(ANNOTATION_DIR, peer_sheet_name, f"{item_id}.json")
-        if os.path.exists(peer_json_path):
-            with open(peer_json_path, 'r', encoding='utf-8') as f:
-                peer_data = json.load(f)
+
+    if peer_sheet_name and ann_dir:
+        peer_json_path = os.path.join(ann_dir, peer_sheet_name, f"{item_id}.json")
+        peer_data = load_json_if_exists(peer_json_path)
     peer_audio_available = bool(peer_sheet_name) and os.path.exists(os.path.join(AUDIO_DIR, peer_sheet_name, f"{item_id}.wav"))
 
-    return render_template('annotate.html', 
-                           sheet_name=sheet_name, 
-                           item_id=item_id, 
-                           text=text, 
+    return render_template('annotate.html',
+                           sheet_name=sheet_name,
+                           item_id=item_id,
+                           text=text,
                            existing_data=existing_data,
                            primary_audio_available=primary_audio_available,
-                           
                            peer_sheet_name=peer_sheet_name,
                            peer_data=peer_data,
                            peer_audio_available=peer_audio_available,
-
                            next_id=next_id,
                            prev_id=prev_id,
                            items=items)
 
+
+# ── Routes: API ────────────────────────────────────────────────
 @app.route('/api/save_shared', methods=['POST'])
+@login_required
 def save_shared_annotation():
     data = request.json
     item_id = data.get('item_id')
@@ -396,64 +491,82 @@ def save_shared_annotation():
 
     return jsonify({'status': 'success'})
 
+
 @app.route('/api/save', methods=['POST'])
+@login_required
 def save_annotation():
     data = request.json
     sheet_name = data.get('sheet_name')
     item_id = data.get('item_id')
-    
+
     if not sheet_name or not item_id:
         return jsonify({'status': 'error', 'message': 'Missing data'}), 400
-    
-    save_dir = os.path.join(ANNOTATION_DIR, sheet_name)
+
+    ann_dir = get_annotator_annotation_dir()
+    save_dir = os.path.join(ann_dir, sheet_name) if ann_dir else os.path.join(ANNOTATION_DIR, sheet_name)
     os.makedirs(save_dir, exist_ok=True)
-    
+
     annotation_payload = build_annotation_payload(sheet_name, item_id, data.get('annotation'))
     filepath = os.path.join(save_dir, f"{item_id}.json")
     with open(filepath, 'w', encoding='utf-8') as f:
         json.dump(annotation_payload, f, ensure_ascii=False, indent=4)
-        
+
     return jsonify({'status': 'success'})
 
+
 @app.route('/api/save_multiple', methods=['POST'])
+@login_required
 def save_multiple_annotations():
     data = request.json
     if not isinstance(data, list):
-         return jsonify({'status': 'error', 'message': 'Expected list of annotations'}), 400
-    
+        return jsonify({'status': 'error', 'message': 'Expected list of annotations'}), 400
+
     try:
         xls = get_excel_data()
+        ann_dir = get_annotator_annotation_dir()
         for entry in data:
             sheet_name = entry.get('sheet_name')
             item_id = entry.get('item_id')
             annotation = entry.get('annotation')
-            
+
             if not sheet_name or not item_id:
                 continue
-                
-            save_dir = os.path.join(ANNOTATION_DIR, sheet_name)
+
+            save_dir = os.path.join(ann_dir, sheet_name) if ann_dir else os.path.join(ANNOTATION_DIR, sheet_name)
             os.makedirs(save_dir, exist_ok=True)
-            
+
             annotation_payload = build_annotation_payload(sheet_name, item_id, annotation, xls=xls)
             filepath = os.path.join(save_dir, f"{item_id}.json")
             with open(filepath, 'w', encoding='utf-8') as f:
                 json.dump(annotation_payload, f, ensure_ascii=False, indent=4)
-                
+
         return jsonify({'status': 'success'})
     except Exception as e:
         print(f"Error saving multiple: {e}")
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
+
+# ── Routes: Static & Misc ─────────────────────────────────────
 @app.route('/audio/<sheet_name>/<path:filename>')
+@login_required
 def serve_audio(sheet_name, filename):
     directory = os.path.join(AUDIO_DIR, sheet_name)
     return send_from_directory(directory, filename)
 
+
 @app.route('/help')
+@login_required
 def help_page():
     return render_template('help.html')
 
+
+# ── Template context ───────────────────────────────────────────
+@app.context_processor
+def inject_annotator():
+    """Make annotator name available in all templates."""
+    return {'current_annotator': get_annotator()}
+
+
 if __name__ == '__main__':
-    # Ensure directories exist
     os.makedirs(ANNOTATION_DIR, exist_ok=True)
     app.run(debug=True, port=3002)
